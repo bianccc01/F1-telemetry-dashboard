@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>F1 Dashboard - Telemetry Visualization</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="src/css/main.css">
+    <link rel="stylesheet" href="src/css/components.css">
+    <link rel="stylesheet" href="src/css/charts.css">
+
+    <!-- D3.js -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+<div id="app">
+    <!-- Header -->
+    <header class="header">
+        <h1>F1 Telemetry Dashboard</h1>
+        <div class="header-controls">
+            <div id="session-selector-container"></div>
+            <div id="driver-selector-container"></div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Loading State -->
+        <div id="loading-state" class="loading-state">
+            <div class="spinner"></div>
+            <p>Caricamento dati...</p>
+        </div>
+
+        <!-- Dashboard Grid -->
+        <div id="dashboard-grid" class="dashboard-grid" style="display: none;">
+            <!-- Telemetry Charts -->
+            <section class="chart-section">
+                <h2>Grafici Telemetrici</h2>
+                <div id="telemetry-charts-container">
+                    <div id="speed-chart" class="chart-container">
+                        <h3>Velocità</h3>
+                        <svg class="chart-svg"></svg>
+                    </div>
+                    <div id="throttle-brake-chart" class="chart-container">
+                        <h3>Throttle / Brake</h3>
+                        <svg class="chart-svg"></svg>
+                    </div>
+                    <div id="gear-drs-chart" class="chart-container">
+                        <h3>Marcia / DRS</h3>
+                        <svg class="chart-svg"></svg>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Circuit Map -->
+            <section class="map-section">
+                <h2>Mappa Circuito</h2>
+                <div id="circuit-map-container">
+                    <svg id="circuit-map" class="circuit-svg"></svg>
+                </div>
+            </section>
+
+            <!-- Lap Analysis -->
+            <section class="lap-section">
+                <h2>Analisi Giri</h2>
+                <div id="lap-analysis-container">
+                    <div class="lap-selector">
+                        <select id="lap-select">
+                            <option value="">Seleziona un giro...</option>
+                        </select>
+                    </div>
+                    <div id="lap-comparison-chart" class="chart-container">
+                        <svg class="chart-svg"></svg>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Error State -->
+        <div id="error-state" class="error-state" style="display: none;">
+            <div class="error-icon">⚠️</div>
+            <h2>Errore nel caricamento dei dati</h2>
+            <p id="error-message">Verifica la connessione e riprova</p>
+            <button id="retry-button" class="retry-button">Riprova</button>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>Dati forniti da <a href="https://openf1.org" target="_blank">OpenF1 API</a></p>
+    </footer>
+</div>
+
+<!-- JavaScript Modules -->
+<script type="module" src="src/js/main.js"></script>
+</body>
+</html>
