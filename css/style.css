@@ -148,3 +148,61 @@ select {
     border-radius: 4px;
     cursor: pointer;
 }
+
+/* Selettori gerarchici */
+.control-section select:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Driver selectors */
+.driver-select-container {
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.driver-color-indicator {
+    width: 20px;
+    height: 20px;
+    border-radius: 3px;
+    flex-shrink: 0;
+    border: 1px solid var(--border-color);
+}
+
+.driver-select {
+    flex: 1;
+}
+
+/* Info text */
+.info-text {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-top: 0.5rem;
+}
+
+/* Stili migliorati per select */
+select {
+    width: 100%;
+    padding: 0.5rem;
+    background-color: var(--bg-dark);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+/* Fix per option lunghe */
+select option {
+    padding: 0.25rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
