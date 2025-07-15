@@ -138,3 +138,39 @@ const API = {
         return uniqueLaps.sort((a, b) => a - b);
     }
 };
+
+async function getFastestLap(sessionKey, driverNumbers) {
+    const fastestLaps = {};
+
+    for (const dn of driverNumbers) {
+        const query = new URLSearchParams({
+            session_key: sessionKey,
+            driver_number: dn
+        });
+
+        const url = `https://api.openf1.org/v1/laps?${query.toString()}`;
+        console.log(`Fetching laps for driver ${dn}:`, url);
+
+        const response = await fetch(url);
+        const data = await response.json();
+
+        const validLaps = data.filter(l => typeof l.lap_duration === 'number' && l.lap_number);
+
+        if (validLaps.length === 0) {
+            console.warn(`No valid laps found for driver ${dn}`);
+            continue;
+        }
+
+        const bestLap = validLaps.reduce((best, lap) =>
+            lap.lap_duration < best.lap_duration ? lap : best
+        );
+
+        fastestLaps[dn] = bestLap.lap_number;
+    }
+
+    return fastestLaps;
+}
+
+
+
+API.getFastestLap = getFastestLap;

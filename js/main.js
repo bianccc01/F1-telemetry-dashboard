@@ -1,4 +1,4 @@
-// Stato globale dell'applicazione
+// Global application state
 const state = {
     availableYears: [],
     selectedYear: null,
@@ -10,17 +10,17 @@ const state = {
     selectedSession: null,
 
     availableDrivers: [],
-    selectedDrivers: [null, null, null, null], // 4 slot per driver
+    selectedDrivers: [null, null, null, null], // 4 driver slots
 
     telemetryData: {},
     laps: [],
     selectedLap: null,
 
-    // Colori per i 4 slot driver
+    // Colors for the 4 driver slots
     slotColors: ['#FF1801', '#0600EF', '#00D2BE', '#FF8700']
 };
 
-// Funzioni helper
+// Helper functions
 function showLoading() {
     document.getElementById('loading-overlay').classList.remove('hidden');
 }
@@ -29,7 +29,7 @@ function hideLoading() {
     document.getElementById('loading-overlay').classList.add('hidden');
 }
 
-// Inizializzazione
+// Initialization
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('F1 Dashboard starting...');
 
@@ -44,36 +44,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-// Inizializza applicazione
+// Initialize application
 async function initializeApp() {
-    // Carica anni disponibili
     state.availableYears = await API.getAvailableYears();
     console.log('Available years:', state.availableYears);
 
-    // Popola selettore anni
     populateYearSelector();
-
-    // Inizializza selettori vuoti
     initializeEmptySelectors();
-
-    // Setup event listeners
     setupEventListeners();
 }
 
-// Popola selettore anni
+// Populate year selector
 function populateYearSelector() {
     const selector = document.getElementById('year-selector');
 
     const select = document.createElement('select');
     select.id = 'year-select';
 
-    // Opzione default
     const defaultOption = document.createElement('option');
     defaultOption.value = '';
     defaultOption.textContent = 'Select year...';
     select.appendChild(defaultOption);
 
-    // Aggiungi anni
     state.availableYears.forEach(year => {
         const option = document.createElement('option');
         option.value = year;
@@ -84,44 +76,30 @@ function populateYearSelector() {
     selector.appendChild(select);
 }
 
-// Inizializza selettori vuoti
+// Initialize empty selectors
 function initializeEmptySelectors() {
-    // GP selector
-    const gpSelector = document.getElementById('gp-selector');
-    gpSelector.innerHTML = '<select id="gp-select" disabled><option>Select year first...</option></select>';
+    document.getElementById('gp-selector').innerHTML = '<select id="gp-select" disabled><option>Select year first...</option></select>';
+    document.getElementById('session-selector').innerHTML = '<select id="session-select" disabled><option>Select GP first...</option></select>';
 
-    // Session selector
-    const sessionSelector = document.getElementById('session-selector');
-    sessionSelector.innerHTML = '<select id="session-select" disabled><option>Select GP first...</option></select>';
-
-    // Driver selectors
     for (let i = 1; i <= 4; i++) {
         const container = document.getElementById(`driver-${i}-container`);
         container.innerHTML = `
-            <div class="driver-color-indicator" style="background-color: ${state.slotColors[i-1]}"></div>
+            <div class="driver-color-indicator" style="background-color: ${state.slotColors[i - 1]}"></div>
             <select id="driver-select-${i}" class="driver-select" disabled>
                 <option>Select session first...</option>
             </select>
         `;
     }
 
-    // Lap selector
-    const lapSelector = document.getElementById('lap-selector');
-    lapSelector.innerHTML = '<select id="lap-select" disabled><option>Select drivers first...</option></select>';
+    document.getElementById('lap-selector').innerHTML = '<select id="lap-select" disabled><option>Select drivers first...</option></select>';
 }
 
 // Setup event listeners
 function setupEventListeners() {
-    // Year change
     document.getElementById('year-select').addEventListener('change', handleYearChange);
-
-    // GP change
     document.getElementById('gp-selector').addEventListener('change', handleGPChange);
-
-    // Session change
     document.getElementById('session-selector').addEventListener('change', handleSessionChange);
 
-    // Driver changes
     for (let i = 1; i <= 4; i++) {
         document.getElementById(`driver-${i}-container`).addEventListener('change', (e) => {
             if (e.target.classList.contains('driver-select')) {
@@ -139,7 +117,6 @@ async function handleYearChange(event) {
     console.log('Year selected:', year);
     state.selectedYear = year;
 
-    // Reset selezioni successive
     state.selectedGP = null;
     state.selectedSession = null;
     state.selectedDrivers = [null, null, null, null];
@@ -147,18 +124,13 @@ async function handleYearChange(event) {
     showLoading();
 
     try {
-        // Carica GP per l'anno
         state.availableGPs = await API.getGrandPrixByYear(year);
         console.log('Available GPs:', state.availableGPs);
 
-        // Popola GP selector
         populateGPSelector();
-
-        // Reset selettori successivi
         resetSessionSelector();
         resetDriverSelectors();
         resetLapSelector();
-
     } catch (error) {
         console.error('Error loading GPs:', error);
     }
@@ -166,20 +138,18 @@ async function handleYearChange(event) {
     hideLoading();
 }
 
-// Popola GP selector
+// Populate GP selector
 function populateGPSelector() {
     const selector = document.getElementById('gp-selector');
 
     const select = document.createElement('select');
     select.id = 'gp-select';
 
-    // Opzione default
     const defaultOption = document.createElement('option');
     defaultOption.value = '';
     defaultOption.textContent = 'Select Grand Prix...';
     select.appendChild(defaultOption);
 
-    // Aggiungi GP
     state.availableGPs.forEach(gp => {
         const option = document.createElement('option');
         option.value = `${gp.location}|${gp.country_name}`;
@@ -190,7 +160,6 @@ function populateGPSelector() {
     selector.innerHTML = '';
     selector.appendChild(select);
 
-    // Re-attach listener
     select.addEventListener('change', handleGPChange);
 }
 
@@ -203,29 +172,18 @@ async function handleGPChange(event) {
     console.log('GP selected:', location, country);
 
     state.selectedGP = { location, country };
-
-    // Reset selezioni successive
     state.selectedSession = null;
     state.selectedDrivers = [null, null, null, null];
 
     showLoading();
 
     try {
-        // Carica sessioni per il GP
-        state.availableSessions = await API.getSessionsByGP(
-            state.selectedYear,
-            location,
-            country
-        );
+        state.availableSessions = await API.getSessionsByGP(state.selectedYear, location, country);
         console.log('Available sessions:', state.availableSessions);
 
-        // Popola session selector
         populateSessionSelector();
-
-        // Reset selettori successivi
         resetDriverSelectors();
         resetLapSelector();
-
     } catch (error) {
         console.error('Error loading sessions:', error);
     }
@@ -233,20 +191,18 @@ async function handleGPChange(event) {
     hideLoading();
 }
 
-// Popola session selector
+// Populate session selector
 function populateSessionSelector() {
     const selector = document.getElementById('session-selector');
 
     const select = document.createElement('select');
     select.id = 'session-select';
 
-    // Opzione default
     const defaultOption = document.createElement('option');
     defaultOption.value = '';
     defaultOption.textContent = 'Select session...';
     select.appendChild(defaultOption);
 
-    // Aggiungi sessioni
     state.availableSessions.forEach(session => {
         const option = document.createElement('option');
         option.value = session.session_key;
@@ -257,7 +213,6 @@ function populateSessionSelector() {
     selector.innerHTML = '';
     selector.appendChild(select);
 
-    // Re-attach listener
     select.addEventListener('change', handleSessionChange);
 }
 
@@ -268,23 +223,16 @@ async function handleSessionChange(event) {
 
     console.log('Session selected:', sessionKey);
 
-    state.selectedSession = state.availableSessions.find(
-        s => s.session_key == sessionKey
-    );
+    state.selectedSession = state.availableSessions.find(s => s.session_key == sessionKey);
 
     showLoading();
 
     try {
-        // Carica driver per la sessione
         state.availableDrivers = await API.getDrivers(sessionKey);
         console.log('Available drivers:', state.availableDrivers);
 
-        // Abilita e popola driver selectors
         populateDriverSelectors();
-
-        // Reset lap selector
         resetLapSelector();
-
     } catch (error) {
         console.error('Error loading drivers:', error);
     }
@@ -292,30 +240,34 @@ async function handleSessionChange(event) {
     hideLoading();
 }
 
-// Popola driver selectors
+// Populate driver selectors
 function populateDriverSelectors() {
     for (let i = 1; i <= 4; i++) {
         const select = document.getElementById(`driver-select-${i}`);
         select.disabled = false;
         select.innerHTML = '';
 
-        // Opzione default
+        const selected = state.selectedDrivers[i - 1];
+
         const defaultOption = document.createElement('option');
         defaultOption.value = '';
         defaultOption.textContent = 'Select driver...';
         select.appendChild(defaultOption);
 
-        // Aggiungi driver
         state.availableDrivers.forEach(driver => {
-            // Controlla se driver già selezionato in altro slot
-            const alreadySelected = state.selectedDrivers.some(
-                d => d && d.driver_number === driver.driver_number
+            const alreadySelected = state.selectedDrivers.some((d, idx) =>
+                d && d.driver_number === driver.driver_number && idx !== (i - 1)
             );
 
-            if (!alreadySelected) {
+            if (!alreadySelected || (selected && selected.driver_number === driver.driver_number)) {
                 const option = document.createElement('option');
                 option.value = driver.driver_number;
-                option.textContent = `${driver.driver_number} - ${driver.name_acronym}`;
+                option.textContent = `${driver.driver_number} - ${driver.name_acronym} (${driver.team_name})`;
+
+                if (selected && driver.driver_number === selected.driver_number) {
+                    option.selected = true;
+                }
+
                 select.appendChild(option);
             }
         });
@@ -323,36 +275,40 @@ function populateDriverSelectors() {
 }
 
 // Handle driver change
-function handleDriverChange(slotIndex, driverNumber) {
+async function handleDriverChange(slotIndex, driverNumber) {
     console.log(`Driver slot ${slotIndex + 1} changed to:`, driverNumber);
 
     if (!driverNumber) {
         state.selectedDrivers[slotIndex] = null;
     } else {
-        const driver = state.availableDrivers.find(
-            d => d.driver_number == driverNumber
-        );
-        state.selectedDrivers[slotIndex] = {
-            ...driver,
-            color: state.slotColors[slotIndex]
-        };
+        const driver = state.availableDrivers.find(d => d.driver_number == driverNumber);
+        state.selectedDrivers[slotIndex] = { ...driver, color: state.slotColors[slotIndex] };
     }
 
-    // Aggiorna altri selettori per riflettere la selezione
     populateDriverSelectors();
 
-    // Se almeno un driver selezionato, possiamo caricare dati
-    const hasSelectedDrivers = state.selectedDrivers.some(d => d !== null);
-    if (hasSelectedDrivers) {
-        console.log('Selected drivers:', state.selectedDrivers.filter(d => d));
-        // TODO: Caricare dati telemetria
+    const selectedDrivers = state.selectedDrivers.filter(d => d);
+    if (selectedDrivers.length > 0) {
+        try {
+            showLoading();
+            const laps = await API.getLaps(state.selectedSession.session_key, selectedDrivers.map(d => d.driver_number));
+            state.laps = laps;
+            console.log('Available laps:', laps);
+
+            populateLapSelector();
+        } catch (error) {
+            console.error('Error loading laps:', error);
+        } finally {
+            hideLoading();
+        }
+    } else {
+        resetLapSelector();
     }
 }
 
 // Reset functions
 function resetSessionSelector() {
-    const selector = document.getElementById('session-selector');
-    selector.innerHTML = '<select id="session-select" disabled><option>Select GP first...</option></select>';
+    document.getElementById('session-selector').innerHTML = '<select id="session-select" disabled><option>Select GP first...</option></select>';
 }
 
 function resetDriverSelectors() {
@@ -364,6 +320,118 @@ function resetDriverSelectors() {
 }
 
 function resetLapSelector() {
-    const selector = document.getElementById('lap-selector');
-    selector.innerHTML = '<select id="lap-select" disabled><option>Select drivers first...</option></select>';
+    document.getElementById('lap-selector').innerHTML = '<select id="lap-select" disabled><option>Select drivers first...</option></select>';
 }
+
+function populateLapSelector() {
+    const container = document.getElementById('lap-selector');
+    container.innerHTML = '';
+
+    const select = document.createElement('select');
+    select.id = 'lap-select';
+
+    const defaultOption = document.createElement('option');
+    defaultOption.value = '';
+    defaultOption.textContent = 'Select lap...';
+    select.appendChild(defaultOption);
+
+    // Aggiungi giri
+    state.laps.forEach(lap => {
+        const option = document.createElement('option');
+        option.value = lap;
+        option.textContent = `Lap ${lap}`;
+        select.appendChild(option);
+    });
+
+    // Bottone per selezionare giro più veloce
+    const fastestButton = document.createElement('button');
+    fastestButton.textContent = 'Giro più veloce';
+    fastestButton.className = 'btn btn-secondary ml-2';
+    fastestButton.addEventListener('click', handleSelectFastestLap);
+
+    // Bottone placeholder per modalità interattiva futura
+    const interactiveButton = document.createElement('button');
+    interactiveButton.textContent = 'Seleziona da grafico (coming soon)';
+    interactiveButton.className = 'btn btn-disabled ml-2';
+    interactiveButton.disabled = true;
+
+    // Event listener per select
+    select.addEventListener('change', handleLapChange);
+
+    // Appendi tutto
+    container.appendChild(select);
+    container.appendChild(fastestButton);
+    container.appendChild(interactiveButton);
+}
+
+
+// Handle lap change
+async function handleLapChange(event) {
+    const lap = parseInt(event.target.value);
+    if (!lap) return;
+
+    console.log('Lap selected:', lap);
+    state.selectedLap = lap;
+
+    showLoading();
+    try {
+        const selectedDrivers = state.selectedDrivers.filter(d => d);
+        const sessionKey = state.selectedSession.session_key;
+        const driverNumbers = selectedDrivers.map(d => d.driver_number);
+
+        const telemetryData = await API.getCarData(sessionKey, driverNumbers, lap);
+        state.telemetryData = {};
+
+        driverNumbers.forEach((driverNumber, idx) => {
+            state.telemetryData[driverNumber] = {
+                data: telemetryData[idx],
+                driver: selectedDrivers.find(d => d.driver_number === driverNumber)
+            };
+        });
+
+        console.log('Telemetry data:', state.telemetryData);
+    } catch (error) {
+        console.error('Error loading telemetry data:', error);
+    } finally {
+        hideLoading();
+    }
+}
+
+async function handleSelectFastestLap() {
+    const selectedDrivers = state.selectedDrivers.filter(d => d);
+    if (!selectedDrivers.length) return;
+
+    showLoading();
+    try {
+        const sessionKey = state.selectedSession.session_key;
+        const driverNumbers = selectedDrivers.map(d => d.driver_number);
+
+        // Mappa dei migliori giri per ciascun pilota
+        const fastestLaps = await API.getFastestLap(sessionKey, driverNumbers);
+
+        if (!fastestLaps || Object.keys(fastestLaps).length === 0) {
+            alert('Nessun giro più veloce trovato.');
+            return;
+        }
+
+        console.log('Fastest laps:', fastestLaps);
+
+        for (const driver of selectedDrivers) {
+            const lapNumber = fastestLaps[driver.driver_number];
+            if (!lapNumber) continue;
+
+            console.log(`Driver ${driver.full_name} -> lap ${lapNumber}`);
+
+            // Aggiorna selezione manualmente per ogni pilota
+            await handleLapChange({ target: { value: lapNumber } }, driver.driver_number);
+        }
+
+    } catch (err) {
+        console.error('Error selecting fastest lap:', err);
+    } finally {
+        hideLoading();
+    }
+}
+
+
+
