@@ -111,15 +111,42 @@ const API = {
 
     // Ottieni dati telemetria
     async getCarData(sessionKey, driverNumbers, lapNumber = null) {
+        console.log('API.getCarData called with:');
+        console.log('- sessionKey:', sessionKey);
+        console.log('- driverNumbers:', driverNumbers);
+        console.log('- lapNumber:', lapNumber, '(will be filtered client-side)');
+
         const promises = driverNumbers.map(driverNum =>
             this.fetchData('/car_data', {
                 session_key: sessionKey,
-                driver_number: driverNum,
-                lap_number: lapNumber
+                driver_number: driverNum
+                // ❌ RIMOSSO: lap_number parameter (non supportato dall'API)
             })
         );
 
         const results = await Promise.all(promises);
+
+        console.log('API raw results:');
+        results.forEach((result, idx) => {
+            console.log(`Driver ${driverNumbers[idx]} raw data:`, result.length, 'points');
+        });
+
+        // 🔍 Se lapNumber è specificato, filtra i dati
+        if (lapNumber !== null) {
+            const filteredResults = results.map((driverData, idx) => {
+                const filtered = driverData.filter(point => {
+                    // Qui dovremmo filtrare per lap, ma l'API non fornisce lap_number direttamente
+                    // Dobbiamo usare un approccio diverso...
+                    return true; // Per ora restituiamo tutto
+                });
+
+                console.log(`Driver ${driverNumbers[idx]} filtered for lap ${lapNumber}:`, filtered.length, 'points');
+                return filtered;
+            });
+
+            return filteredResults;
+        }
+
         return results;
     },
 

@@ -17,7 +17,8 @@ const state = {
     selectedLap: null,
 
     // Colors for the 4 driver slots
-    slotColors: ['#FF1801', '#0600EF', '#00D2BE', '#FF8700']
+    slotColors: ['#4477AA', '#EE6677', '#228833', '#CCBB44']
+
 };
 
 // Helper functions
@@ -374,7 +375,9 @@ function populateLapSelector() {
             const fastest = await API.getFastestLap(sessionKey, driverNumbers);
             console.log('Fastest laps per driver:', fastest);
 
-            // Mostra messaggio e imposta stato
+            await TelemetryManager.loadForFastestLaps(fastest);
+            updateCharts();
+
             const msg = Object.entries(fastest)
                 .map(([dn, lap]) => {
                     const driver = state.selectedDrivers.find(d => d.driver_number == dn);
@@ -382,11 +385,12 @@ function populateLapSelector() {
                 })
                 .join('\n');
 
-            state.selectedLap = fastest;
-            select.value = ''; // Lascia il menu disattivato se uso modalità per-driver
+            console.log('Fastest laps loaded:\n' + msg);
+            select.value = '';
+
         } catch (error) {
-            console.error('Errore nel recupero dei giri più veloci:', error);
-            alert('Errore nel recupero dei giri più veloci.');
+            console.error('Error loading fastest laps:', error);
+            alert('Error loading fastest laps.');
         } finally {
             hideLoading();
         }
@@ -394,17 +398,19 @@ function populateLapSelector() {
 
     container.appendChild(fastestButton);
 
-    // Ascolta cambio selezione manuale
-    select.addEventListener('change', (e) => {
+
+    select.addEventListener('change', async (e) => {
         const selectedLap = parseInt(e.target.value);
         if (!isNaN(selectedLap)) {
-            const lapPerDriver = {};
-            state.selectedDrivers.forEach(driver => {
-                if (driver) lapPerDriver[driver.driver_number] = selectedLap;
-            });
-            state.selectedLap = lapPerDriver;
+            // Carica i dati telemetria per il lap selezionato
+            await TelemetryManager.loadForLap(selectedLap);
+
+            // Aggiorna i grafici
+            updateCharts();
         } else {
             state.selectedLap = null;
+            state.telemetryData = {};
+            clearCharts();
         }
     });
 }
@@ -478,6 +484,51 @@ async function handleSelectFastestLap() {
         hideLoading();
     }
 }
+
+async function loadTelemetryForLap(lap) {
+    if (!state.selectedSession || state.selectedDrivers.every(d => !d)) return;
+
+    console.log('Loading telemetry for lap:', lap);
+    state.selectedLap = lap;
+
+    showLoading();
+    try {
+        const selectedDrivers = state.selectedDrivers.filter(d => d);
+        const sessionKey = state.selectedSession.session_key;
+        const driverNumbers = selectedDrivers.map(d => d.driver_number);
+
+        const telemetryData = await API.getCarData(sessionKey, driverNumbers, lap);
+        state.telemetryData = {};
+
+        driverNumbers.forEach((driverNumber, idx) => {
+            state.telemetryData[driverNumber] = {
+                data: telemetryData[idx],
+                driver: selectedDrivers.find(d => d.driver_number === driverNumber),
+                color: state.slotColors[state.selectedDrivers.findIndex(d => d && d.driver_number === driverNumber)]
+            };
+        });
+
+        console.log('Telemetry data loaded:', state.telemetryData);
+    } catch (error) {
+        console.error('Error loading telemetry data:', error);
+    } finally {
+        hideLoading();
+    }
+}
+
+function updateCharts() {
+    // Aggiorna i grafici con i dati telemetria caricati
+    SpeedChart.create(state.telemetryData);
+}
+
+function clearCharts() {
+    d3.select('#speed-chart').selectAll('*').remove();
+    d3.select('#throttle-brake-chart').selectAll('*').remove();
+    d3.select('#gear-chart').selectAll('*').remove();
+}
+
+
+
 
 
 

@@ -53,6 +53,32 @@
         </div>
     </aside>
 
+    <!-- ✅ NUOVA: Track map sidebar -->
+    <aside class="track-map-sidebar">
+        <div class="track-map-container">
+            <h3>🏁 Track Position</h3>
+            <div id="track-map" class="track-map">
+                <!-- 🚧 TODO: Implementare track map 2D -->
+                <div class="track-map-placeholder">
+                    <div class="placeholder-icon">🏎️</div>
+                    <p>Track Map 2D</p>
+                    <p class="placeholder-text">Da implementare</p>
+                    <ul class="todo-list">
+                        <li>• Forma della pista 2D</li>
+                        <li>• Puntino posizione pilota</li>
+                        <li>• Sincronizzazione con telemetria</li>
+                        <li>• Click per posizionare marker</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="track-info">
+                <span id="current-sector">Sector: -</span>
+                <span id="current-speed">Speed: - km/h</span>
+                <span id="current-distance">Distance: - m</span>
+            </div>
+        </div>
+    </aside>
+
     <!-- Area principale per i grafici -->
     <section class="charts-container">
         <div class="chart-wrapper">
@@ -62,12 +88,24 @@
 
         <div class="chart-wrapper">
             <h3>Throttle & Brake (%)</h3>
-            <div id="throttle-brake-chart" class="chart"></div>
+            <div id="throttle-brake-chart" class="chart">
+                <!-- 🚧 TODO: Implementare throttle/brake chart -->
+                <div class="chart-placeholder">
+                    <p>📊 Throttle & Brake Chart</p>
+                    <p>Da implementare</p>
+                </div>
+            </div>
         </div>
 
         <div class="chart-wrapper">
             <h3>Gear & DRS</h3>
-            <div id="gear-chart" class="chart"></div>
+            <div id="gear-chart" class="chart">
+                <!-- 🚧 TODO: Implementare gear/DRS chart -->
+                <div class="chart-placeholder">
+                    <p>⚙️ Gear & DRS Chart</p>
+                    <p>Da implementare</p>
+                </div>
+            </div>
         </div>
     </section>
 </main>
@@ -81,5 +119,7 @@
 <!-- Scripts -->
 <script src="js/api.js"></script>
 <script src="js/main.js"></script>
+<script src="js/telemetry.js"></script>
+<script src="js/charts/speedChart.js"></script>
 </body>
 </html>
