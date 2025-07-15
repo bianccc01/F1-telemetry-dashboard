@@ -244,7 +244,6 @@ async function handleSessionChange(event) {
 function populateDriverSelectors() {
     for (let i = 1; i <= 4; i++) {
         const select = document.getElementById(`driver-select-${i}`);
-        select.disabled = false;
         select.innerHTML = '';
 
         const selected = state.selectedDrivers[i - 1];
@@ -271,6 +270,15 @@ function populateDriverSelectors() {
                 select.appendChild(option);
             }
         });
+
+        // Abilita il dropdown in modo sequenziale:
+        // Abilita il primo driver sempre se sessione selezionata
+        // Per gli altri: abilita solo se il driver precedente è selezionato
+        if (i === 1) {
+            select.disabled = !state.selectedSession; // abilita solo se sessione selezionata
+        } else {
+            select.disabled = !state.selectedDrivers[i - 2]; // abilita solo se precedente driver selezionato
+        }
     }
 }
 
@@ -279,7 +287,11 @@ async function handleDriverChange(slotIndex, driverNumber) {
     console.log(`Driver slot ${slotIndex + 1} changed to:`, driverNumber);
 
     if (!driverNumber) {
+        // Se deseleziono un driver, resetto tutti i successivi a null
         state.selectedDrivers[slotIndex] = null;
+        for (let i = slotIndex + 1; i < 4; i++) {
+            state.selectedDrivers[i] = null;
+        }
     } else {
         const driver = state.availableDrivers.find(d => d.driver_number == driverNumber);
         state.selectedDrivers[slotIndex] = { ...driver, color: state.slotColors[slotIndex] };
@@ -343,26 +355,60 @@ function populateLapSelector() {
         select.appendChild(option);
     });
 
+    container.appendChild(select);
+
     // Bottone per selezionare giro più veloce
     const fastestButton = document.createElement('button');
-    fastestButton.textContent = 'Giro più veloce';
-    fastestButton.className = 'btn btn-secondary ml-2';
-    fastestButton.addEventListener('click', handleSelectFastestLap);
+    fastestButton.textContent = 'Seleziona giro più veloce';
+    fastestButton.classList.add('fastest-lap-button');
+    fastestButton.addEventListener('click', async () => {
+        if (!state.selectedSession || state.selectedDrivers.every(d => !d)) return;
 
-    // Bottone placeholder per modalità interattiva futura
-    const interactiveButton = document.createElement('button');
-    interactiveButton.textContent = 'Seleziona da grafico (coming soon)';
-    interactiveButton.className = 'btn btn-disabled ml-2';
-    interactiveButton.disabled = true;
+        showLoading();
+        try {
+            const sessionKey = state.selectedSession.session_key;
+            const driverNumbers = state.selectedDrivers
+                .filter(d => d)
+                .map(d => d.driver_number);
 
-    // Event listener per select
-    select.addEventListener('change', handleLapChange);
+            const fastest = await API.getFastestLap(sessionKey, driverNumbers);
+            console.log('Fastest laps per driver:', fastest);
 
-    // Appendi tutto
-    container.appendChild(select);
+            // Mostra messaggio e imposta stato
+            const msg = Object.entries(fastest)
+                .map(([dn, lap]) => {
+                    const driver = state.selectedDrivers.find(d => d.driver_number == dn);
+                    return `${driver.name_acronym}: Lap ${lap}`;
+                })
+                .join('\n');
+
+            state.selectedLap = fastest;
+            select.value = ''; // Lascia il menu disattivato se uso modalità per-driver
+        } catch (error) {
+            console.error('Errore nel recupero dei giri più veloci:', error);
+            alert('Errore nel recupero dei giri più veloci.');
+        } finally {
+            hideLoading();
+        }
+    });
+
     container.appendChild(fastestButton);
-    container.appendChild(interactiveButton);
+
+    // Ascolta cambio selezione manuale
+    select.addEventListener('change', (e) => {
+        const selectedLap = parseInt(e.target.value);
+        if (!isNaN(selectedLap)) {
+            const lapPerDriver = {};
+            state.selectedDrivers.forEach(driver => {
+                if (driver) lapPerDriver[driver.driver_number] = selectedLap;
+            });
+            state.selectedLap = lapPerDriver;
+        } else {
+            state.selectedLap = null;
+        }
+    });
 }
+
 
 
 // Handle lap change
