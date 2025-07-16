@@ -24,7 +24,10 @@ const TrackMap = {
         const yExtent = d3.extent(trackData, d => d.y);
 
         const xScale = d3.scaleLinear().domain(xExtent).range([20, 280]);
-        const yScale = d3.scaleLinear().domain(yExtent).range([20, 280]);
+        const svgHeight = 300; // Matching viewBox height
+        const yExtentRange = yExtent[1] - yExtent[0];
+        const yPadding = (svgHeight - (yExtentRange / (d3.max([xExtent[1] - xExtent[0], yExtent[1] - yExtent[0]])) * (svgHeight - 40))) / 2;
+        const yScale = d3.scaleLinear().domain(yExtent).range([yPadding, svgHeight - yPadding]);
 
         // Draw the track
         svg.append('path')
@@ -48,9 +51,14 @@ const TrackMap = {
     updateCarPosition(point, xScale, yScale) {
         const carDot = d3.select('#car-dot');
         if (point && point.x && point.y) {
+            console.log('Updating car position with point:', point); // Debugging log
             carDot.attr('cx', xScale(point.x))
                 .attr('cy', yScale(point.y))
                 .style('opacity', 1);
+
+            // Update sector and distance info
+            d3.select('#current-sector').text(`Sector: ${point.sector || '-'}`);
+            d3.select('#current-distance').text(`Distance: ${point.distance ? point.distance.toFixed(0) : '-'} m`);
         } else {
             carDot.style('opacity', 0);
         }

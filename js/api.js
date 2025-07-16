@@ -202,5 +202,13 @@ const API = {
         return validLaps.reduce((best, lap) =>
             lap.lap_duration < best.lap_duration ? lap : best
         );
+    },
+
+    async getIntervals(sessionKey, driverNumber, lapNumber) {
+        return await this.fetchData('/intervals', {
+            session_key: sessionKey,
+            driver_number: driverNumber,
+            lap_number: lapNumber
+        });
     }
 };

@@ -46,8 +46,11 @@ const TelemetryManager = {
                 // Aggiungi calcolo della distanza cumulativa
                 const telemetryWithDistance = this.calculateCumulativeDistance(telemetryWithPosition);
 
+                // Aggiungi informazioni sui settori
+                const telemetryWithSectors = await this.enrichWithSectorData(telemetryWithDistance, sessionKey);
+
                 state.telemetryData[driverNumber] = {
-                    data: telemetryWithDistance,
+                    data: telemetryWithSectors,
                     driver: driver,
                     driverName: driver.name_acronym || driver.full_name,
                     driverNumber: driverNumber,
@@ -180,6 +183,49 @@ const TelemetryManager = {
         }
     },
 
+    async enrichWithSectorData(telemetryData, sessionKey) {
+        try {
+            console.log('🔄 Loading sector data...');
+            const sectorData = await API.fetchData('/sectors', { session_key: sessionKey });
+
+            if (!sectorData || Object.keys(sectorData).length === 0) {
+                console.warn('⚠️ No sector data available for this session.');
+                return telemetryData.map(p => ({ ...p, sector: null }));
+            }
+
+            // Ordina i punti di telemetria per distanza
+            telemetryData.sort((a, b) => a.distance - b.distance);
+
+            // Trova la distanza massima (lunghezza del giro)
+            const maxDistance = Math.max(...telemetryData.map(p => p.distance));
+
+            // Mappa le distanze dei settori
+            const sectorBoundaries = [
+                { distance: sectorData.sector_1_dist, sector: 1 },
+                { distance: sectorData.sector_2_dist, sector: 2 },
+                { distance: maxDistance, sector: 3 } // Il settore 3 finisce alla fine del giro
+            ].sort((a, b) => a.distance - b.distance);
+
+            let currentBoundaryIndex = 0;
+            const enrichedData = telemetryData.map(point => {
+                while (currentBoundaryIndex < sectorBoundaries.length - 1 && point.distance > sectorBoundaries[currentBoundaryIndex].distance) {
+                    currentBoundaryIndex++;
+                }
+                return {
+                    ...point,
+                    sector: sectorBoundaries[currentBoundaryIndex].sector
+                };
+            });
+
+            console.log('✅ Enriched telemetry with sector data.');
+            return enrichedData;
+
+        } catch (error) {
+            console.error('❌ Error enriching with sector data:', error);
+            return telemetryData.map(p => ({ ...p, sector: null })); // Ritorna i dati senza info sui settori in caso di errore
+        }
+    },
+
     // Calcola la distanza cumulativa se non presente
     calculateCumulativeDistance(telemetryData) {
         if (!telemetryData || telemetryData.length === 0) return telemetryData;
@@ -242,11 +288,14 @@ const TelemetryManager = {
                     // Aggiungi calcolo della distanza cumulativa
                     const telemetryWithDistance = this.calculateCumulativeDistance(telemetryWithPosition);
 
+                    // Aggiungi informazioni sui settori
+                    const telemetryWithSectors = await this.enrichWithSectorData(telemetryWithDistance, sessionKey);
+
                     const driver = state.selectedDrivers.find(d => d && d.driver_number == driverNumber);
                     const slotIndex = state.selectedDrivers.findIndex(d => d && d.driver_number == driverNumber);
 
                     state.telemetryData[driverNumber] = {
-                        data: telemetryWithDistance,
+                        data: telemetryWithSectors,
                         driver: driver,
                         driverName: driver.name_acronym || driver.full_name,
                         driverNumber: parseInt(driverNumber),
