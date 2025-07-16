@@ -1,6 +1,9 @@
 // js/charts/trackMap.js
 
 const TrackMap = {
+    xScale: null,
+    yScale: null,
+
     create(telemetryData) {
         const container = d3.select('#track-map');
         container.selectAll('*').remove(); // Clear previous map
@@ -12,7 +15,7 @@ const TrackMap = {
 
         // Get the first driver's data for the track outline
         const firstDriverKey = Object.keys(telemetryData)[0];
-        if (!firstDriverKey || !telemetryData[firstDriverKey].data) {
+        if (!firstDriverKey || !telemetryData[firstDriverKey].data || telemetryData[firstDriverKey].data.length === 0) {
             container.html('<div class="no-data">No track data available</div>');
             return;
         }
@@ -23,11 +26,11 @@ const TrackMap = {
         const xExtent = d3.extent(trackData, d => d.x);
         const yExtent = d3.extent(trackData, d => d.y);
 
-        const xScale = d3.scaleLinear().domain(xExtent).range([20, 280]);
+        this.xScale = d3.scaleLinear().domain(xExtent).range([20, 280]);
         const svgHeight = 300; // Matching viewBox height
         const yExtentRange = yExtent[1] - yExtent[0];
         const yPadding = (svgHeight - (yExtentRange / (d3.max([xExtent[1] - xExtent[0], yExtent[1] - yExtent[0]])) * (svgHeight - 40))) / 2;
-        const yScale = d3.scaleLinear().domain(yExtent).range([yPadding, svgHeight - yPadding]);
+        this.yScale = d3.scaleLinear().domain(yExtent).range([yPadding, svgHeight - yPadding]);
 
         // Draw the track
         svg.append('path')
@@ -36,8 +39,8 @@ const TrackMap = {
             .attr('stroke', '#444')
             .attr('stroke-width', 2)
             .attr('d', d3.line()
-                .x(d => xScale(d.x))
-                .y(d => yScale(d.y))
+                .x(d => this.xScale(d.x))
+                .y(d => this.yScale(d.y))
             );
 
         // Draw a single dot for the current position
@@ -48,12 +51,11 @@ const TrackMap = {
             .style('opacity', 0);
     },
 
-    updateCarPosition(point, xScale, yScale) {
+    updateCarPosition(point) {
         const carDot = d3.select('#car-dot');
-        if (point && point.x && point.y) {
-            console.log('Updating car position with point:', point); // Debugging log
-            carDot.attr('cx', xScale(point.x))
-                .attr('cy', yScale(point.y))
+        if (point && point.x && point.y && this.xScale && this.yScale) {
+            carDot.attr('cx', this.xScale(point.x))
+                .attr('cy', this.yScale(point.y))
                 .style('opacity', 1);
 
             // Update sector and distance info

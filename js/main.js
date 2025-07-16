@@ -496,6 +496,11 @@ async function loadAllData() {
             const carData = await API.getCarData(state.selectedSession.session_key, driverNumber, lapNumber);
             const lapInfo = state.lapsByDriver[driverNumber].find(l => l.lap_number == lapNumber);
             const tyreInfo = document.getElementById(`tyre-info-${driverNumber}`);
+            const sectorTimes = {
+                sector1: parseFloat(lapInfo.sector1_time),
+                sector2: parseFloat(lapInfo.sector2_time),
+                sector3: parseFloat(lapInfo.sector3_time),
+            };
             if (selectedValue !== 'fastest') {
                 tyreInfo.innerHTML = ''; // Clear previous info
             }
@@ -508,7 +513,8 @@ async function loadAllData() {
                 data: {
                     data: carData,
                     driver: driver,
-                    color: driver.color
+                    color: driver.color,
+                    sectorTimes: sectorTimes,
                 }
             };
         });

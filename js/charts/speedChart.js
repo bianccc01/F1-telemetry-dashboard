@@ -83,7 +83,8 @@ window.SpeedChart = {
                     driverNumber,
                     driverName,
                     color,
-                    data: dataWithDistance
+                    data: dataWithDistance,
+                    sectorTimes: driverData.sectorTimes,
                 });
             }
         });
@@ -236,14 +237,6 @@ window.SpeedChart = {
 
         const bisectDistance = d3.bisector(d => d.distance).left;
 
-        // Get track scales once
-        const firstDriverKey = Object.keys(state.telemetryData)[0];
-        const trackData = state.telemetryData[firstDriverKey].data;
-        const xExtent = d3.extent(trackData, d => d.x);
-        const yExtent = d3.extent(trackData, d => d.y);
-        const trackXScale = d3.scaleLinear().domain(xExtent).range([20, 280]);
-        const trackYScale = d3.scaleLinear().domain(yExtent).range([20, 280]);
-
         const overlay = g.append('rect')
             .attr('class', 'overlay')
             .attr('width', width)
@@ -266,14 +259,6 @@ window.SpeedChart = {
 
                 let tooltipData = [];
 
-                // Get track scales once
-                const firstDriverKey = Object.keys(state.telemetryData)[0];
-                const trackData = state.telemetryData[firstDriverKey].data;
-                const xExtent = d3.extent(trackData, d => d.x);
-                const yExtent = d3.extent(trackData, d => d.y);
-                const trackXScale = d3.scaleLinear().domain(xExtent).range([20, 280]);
-                const trackYScale = d3.scaleLinear().domain(yExtent).range([20, 280]);
-
                 allData.forEach(driver => {
                     const i = bisectDistance(driver.data, x0, 1);
                     const d0 = driver.data[i - 1];
@@ -281,15 +266,24 @@ window.SpeedChart = {
                     if (!d0 || !d1) return;
                     const d = x0 - d0.distance > d1.distance - x0 ? d1 : d0;
 
+                    const lapTime = new Date(d.date) - new Date(driver.data[0].date);
+                    let sector = 1;
+                    if (lapTime > driver.sectorTimes.sector1) sector = 2;
+                    if (lapTime > driver.sectorTimes.sector2) sector = 3;
+
                     tooltipData.push({
                         driverName: driver.driverName,
                         speed: d.speed,
                         color: driver.color,
                         x: scales.xScale(d.distance),
-                        y: scales.yScale(d.speed)
+                        y: scales.yScale(d.speed),
+                        sector: sector,
                     });
 
-                    TrackMap.updateCarPosition(d, trackXScale, trackYScale);
+                    // Update track map for the first driver in the tooltip
+                    if (tooltipData.length === 1) {
+                        TrackMap.updateCarPosition({...d, sector});
+                    }
                 });
 
                 tooltipLine
