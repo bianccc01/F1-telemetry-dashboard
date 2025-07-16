@@ -344,3 +344,36 @@ select option {
 .track-info span {
     color: #ccc;
 }
+
+/* Toggle Sidebar Button */
+.toggle-sidebar-button {
+    position: absolute;
+    left: 300px; /* Same as sidebar width */
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 50;
+    width: 25px;
+    height: 50px;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 0 5px 5px 0;
+    cursor: pointer;
+    font-size: 16px;
+    transition: left 0.3s ease, background-color 0.2s;
+}
+
+.toggle-sidebar-button:hover {
+    background-color: #c60500;
+}
+
+/* When sidebar is hidden */
+.main-container.sidebar-hidden .sidebar {
+    width: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+.main-container.sidebar-hidden .toggle-sidebar-button {
+    left: 0;
+}

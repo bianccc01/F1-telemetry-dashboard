@@ -53,6 +53,23 @@ async function initializeApp() {
     populateYearSelector();
     initializeEmptySelectors();
     setupEventListeners();
+    setupSidebarToggle();
+}
+
+function setupSidebarToggle() {
+    const toggleButton = document.getElementById('toggle-sidebar-button');
+    const mainContainer = document.querySelector('.main-container');
+
+    toggleButton.addEventListener('click', () => {
+        mainContainer.classList.toggle('sidebar-hidden');
+
+        // Change button text based on state
+        if (mainContainer.classList.contains('sidebar-hidden')) {
+            toggleButton.textContent = '▶';
+        } else {
+            toggleButton.textContent = '◀';
+        }
+    });
 }
 
 // Populate year selector

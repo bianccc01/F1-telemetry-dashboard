@@ -41,6 +41,7 @@ const TrackMap = {
             .attr('d', d3.line()
                 .x(d => this.xScale(d.x))
                 .y(d => this.yScale(d.y))
+                .curve(d3.curveCardinalClosed) // Use a closed cardinal spline
             );
 
         // Draw a single dot for the current position
