@@ -47,9 +47,139 @@
             </div>
         </div>
 
+        <div id="lap-selectors-container">
+            <!-- Lap selectors will be dynamically added here -->
+        </div>
+
         <div class="control-section">
-            <h3>Lap</h3>
-            <div id="lap-selector"></div>
+            <button id="load-data-button" class="load-data-button" disabled>Load Data</button>
+        </div>
+    </aside>
+
+    <!-- ✅ NUOVA: Track map sidebar -->
+    <aside class="track-map-sidebar">
+        <div class="track-map-container">
+            <h3>🏁 Track Position</h3>
+            <div id="track-map" class="track-map">
+                <!-- 🚧 TODO: Implementare track map 2D -->
+                <div class="track-map-placeholder">
+                    <div class="placeholder-icon">🏎️</div>
+                    <p>Track Map 2D</p>
+                    <p class="placeholder-text">Da implementare</p>
+                    <ul class="todo-list">
+                        <li>• Forma della pista 2D</li>
+                        <li>• Puntino posizione pilota</li>
+                        <li>• Sincronizzazione con telemetria</li>
+                        <li>• Click per posizionare marker</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="track-info">
+                <span id="current-sector">Sector: -</span>
+                <span id="current-speed">Speed: - km/h</span>
+                <span id="current-distance">Distance: - m</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Area principale per i grafici -->
+    <section class="charts-container">
+        <div class="chart-wrapper">
+            <h3>Speed (km/h)</h3>
+            <div id="speed-chart" class="chart"></div>
+        </div>
+
+        <div class="chart-wrapper">
+            <h3>Throttle & Brake (%)</h3>
+            <div id="throttle-brake-chart" class="chart">
+                <!-- 🚧 TODO: Implementare throttle/brake chart -->
+                <div class="chart-placeholder">
+                    <p>📊 Throttle & Brake Chart</p>
+                    <p>Da implementare</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-wrapper">
+            <h3>Gear & DRS</h3>
+            <div id="gear-chart" class="chart">
+                <!-- 🚧 TODO: Implementare gear/DRS chart -->
+                <div class="chart-placeholder">
+                    <p>⚙️ Gear & DRS Chart</p>
+                    <p>Da implementare</p>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<!-- Loading overlay -->
+<div id="loading-overlay" class="loading-overlay hidden">
+    <div class="spinner"></div>
+    <p>Loading data...</p>
+</div>
+
+<!-- Scripts -->
+<script src="js/api.js"></script>
+<script src="js/main.js"></script>
+<script src="js/telemetry.js"></script>
+<script src="js/charts/speedChart.js"></script>
+</body>
+</html><!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>F1 Telemetry Dashboard</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/style.css">
+
+    <!-- D3.js -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+<!-- Header -->
+<header class="header">
+    <h1>F1 Telemetry Dashboard</h1>
+    <p class="subtitle">Real-time telemetry visualization</p>
+</header>
+
+<!-- Main container -->
+<main class="main-container">
+    <!-- Sidebar per controlli -->
+    <aside class="sidebar">
+        <div class="control-section">
+            <h3>Year</h3>
+            <div id="year-selector"></div>
+        </div>
+
+        <div class="control-section">
+            <h3>Grand Prix</h3>
+            <div id="gp-selector"></div>
+        </div>
+
+        <div class="control-section">
+            <h3>Session</h3>
+            <div id="session-selector"></div>
+        </div>
+
+        <div class="control-section">
+            <h3>Drivers (max 4)</h3>
+            <div id="driver-selectors">
+                <div id="driver-1-container" class="driver-select-container"></div>
+                <div id="driver-2-container" class="driver-select-container"></div>
+                <div id="driver-3-container" class="driver-select-container"></div>
+                <div id="driver-4-container" class="driver-select-container"></div>
+            </div>
+        </div>
+
+        <div id="lap-selectors-container">
+            <!-- Lap selectors will be dynamically added here -->
+        </div>
+
+        <div class="control-section">
+            <button id="load-data-button" class="load-data-button" disabled>Load Data</button>
         </div>
     </aside>
 

@@ -6,7 +6,8 @@ const API = {
     // Cache per ottimizzare le richieste
     cache: {
         sessions: null,
-        drivers: new Map()
+        drivers: new Map(),
+        laps: new Map()
     },
 
     // Metodo helper per fare richieste
@@ -110,94 +111,73 @@ const API = {
     },
 
     // Ottieni dati telemetria
-    async getCarData(sessionKey, driverNumbers, lapNumber = null) {
-        console.log('API.getCarData called with:');
-        console.log('- sessionKey:', sessionKey);
-        console.log('- driverNumbers:', driverNumbers);
-        console.log('- lapNumber:', lapNumber, '(will be filtered client-side)');
-
-        const promises = driverNumbers.map(driverNum =>
-            this.fetchData('/car_data', {
-                session_key: sessionKey,
-                driver_number: driverNum
-                // ❌ RIMOSSO: lap_number parameter (non supportato dall'API)
-            })
-        );
-
-        const results = await Promise.all(promises);
-
-        console.log('API raw results:');
-        results.forEach((result, idx) => {
-            console.log(`Driver ${driverNumbers[idx]} raw data:`, result.length, 'points');
+    async getCarData(sessionKey, driverNumber, lapNumber) {
+        // L'API non supporta il filtraggio per numero di giro, quindi recuperiamo tutti i dati
+        // e li filtriamo lato client. Questo non è efficiente, ma è un limite dell'API.
+        const allCarData = await this.fetchData('/car_data', {
+            session_key: sessionKey,
+            driver_number: driverNumber
         });
 
-        // 🔍 Se lapNumber è specificato, filtra i dati
-        if (lapNumber !== null) {
-            const filteredResults = results.map((driverData, idx) => {
-                const filtered = driverData.filter(point => {
-                    // Qui dovremmo filtrare per lap, ma l'API non fornisce lap_number direttamente
-                    // Dobbiamo usare un approccio diverso...
-                    return true; // Per ora restituiamo tutto
-                });
+        // Per filtrare per giro, abbiamo bisogno dei dati dei giri
+        const laps = await this.getLaps(sessionKey, driverNumber);
+        const targetLap = laps.find(l => l.lap_number == lapNumber);
 
-                console.log(`Driver ${driverNumbers[idx]} filtered for lap ${lapNumber}:`, filtered.length, 'points');
-                return filtered;
-            });
-
-            return filteredResults;
+        if (!targetLap) {
+            console.error(`Lap ${lapNumber} not found for driver ${driverNumber}`);
+            return [];
         }
 
-        return results;
+        const lapStartTime = new Date(targetLap.date_start);
+        const lapEndTime = new Date(lapStartTime.getTime() + (targetLap.lap_duration * 1000));
+
+        return allCarData.filter(d => {
+            const pointDate = new Date(d.date);
+            return pointDate >= lapStartTime && pointDate <= lapEndTime;
+        });
     },
 
     // Ottieni lista dei giri
-    async getLaps(sessionKey, driverNumbers) {
-        const promises = driverNumbers.map(driverNum =>
-            this.fetchData('/laps', {
-                session_key: sessionKey,
-                driver_number: driverNum
-            })
-        );
-
-        const results = await Promise.all(promises);
-        const allLaps = results.flat();
-        const uniqueLaps = [...new Set(allLaps.map(lap => lap.lap_number))];
-        return uniqueLaps.sort((a, b) => a - b);
-    }
-};
-
-async function getFastestLap(sessionKey, driverNumbers) {
-    const fastestLaps = {};
-
-    for (const dn of driverNumbers) {
-        const query = new URLSearchParams({
-            session_key: sessionKey,
-            driver_number: dn
-        });
-
-        const url = `https://api.openf1.org/v1/laps?${query.toString()}`;
-        console.log(`Fetching laps for driver ${dn}:`, url);
-
-        const response = await fetch(url);
-        const data = await response.json();
-
-        const validLaps = data.filter(l => typeof l.lap_duration === 'number' && l.lap_number);
-
-        if (validLaps.length === 0) {
-            console.warn(`No valid laps found for driver ${dn}`);
-            continue;
+    async getLaps(sessionKey, driverNumber) {
+        const cacheKey = `${sessionKey}-${driverNumber}`;
+        if (this.cache.laps.has(cacheKey)) {
+            return this.cache.laps.get(cacheKey);
         }
 
-        const bestLap = validLaps.reduce((best, lap) =>
+        const lapsData = await this.fetchData('/laps', {
+            session_key: sessionKey,
+            driver_number: driverNumber
+        });
+
+        const stintsData = await this.fetchData('/stints', {
+            session_key: sessionKey,
+            driver_number: driverNumber
+        });
+
+        // Arricchisci i dati dei giri con la mescola degli pneumatici dagli stint
+        const enrichedLaps = lapsData.map(lap => {
+            const stint = stintsData.find(s => lap.lap_number >= s.lap_start && lap.lap_number <= s.lap_end);
+            return {
+                ...lap,
+                compound: stint ? stint.compound : 'Unknown'
+            };
+        });
+
+        const result = enrichedLaps.filter(l => l.lap_number).sort((a, b) => a.lap_number - b.lap_number);
+        this.cache.laps.set(cacheKey, result);
+        return result;
+    },
+
+    // Ottieni il giro più veloce per un pilota
+    async getFastestLap(sessionKey, driverNumber) {
+        const laps = await this.getLaps(sessionKey, driverNumber);
+        if (!laps || laps.length === 0) return null;
+
+        const validLaps = laps.filter(l => typeof l.lap_duration === 'number');
+        if (validLaps.length === 0) return null;
+
+        return validLaps.reduce((best, lap) =>
             lap.lap_duration < best.lap_duration ? lap : best
         );
-
-        fastestLaps[dn] = bestLap.lap_number;
     }
-
-    return fastestLaps;
-}
-
-
-
-API.getFastestLap = getFastestLap;
+};

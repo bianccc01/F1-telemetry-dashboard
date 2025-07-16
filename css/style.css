@@ -88,18 +88,6 @@ body {
     margin-bottom: 1rem;
 }
 
-
-.tooltip {
-    position: absolute;
-    background-color: rgba(0, 0, 0, 0.8);
-    color: #fff;
-    padding: 8px;
-    border-radius: 4px;
-    font-size: 12px;
-    pointer-events: none;
-    transition: opacity 0.2s;
-}
-
 .chart {
     width: 100%;
     min-height: 480px;
@@ -273,6 +261,40 @@ select option {
 
 .fastest-lap-button:hover {
     background-color: #c60500;
+}
+
+.tooltip {
+    position: absolute;
+    background-color: rgba(0, 0, 0, 0.8);
+    color: #fff;
+    padding: 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    pointer-events: none;
+    transition: opacity 0.2s;
+}
+
+.tyre-info {
+    font-size: 12px;
+    margin-top: 5px;
+    color: #ccc;
+}
+
+.load-data-button {
+    width: 100%;
+    padding: 10px;
+    background-color: #e10600;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-top: 10px;
+}
+
+.load-data-button:disabled {
+    background-color: #555;
+    cursor: not-allowed;
 }
 
 .fastest-lap-button:disabled {

@@ -12,9 +12,9 @@ const state = {
     availableDrivers: [],
     selectedDrivers: [null, null, null, null], // 4 driver slots
 
-    telemetryData: {},
-    laps: [],
-    selectedLap: null,
+    telemetryData: {}, // Now stores telemetry data keyed by driver number
+    lapsByDriver: {},   // Stores available laps for each driver
+    selectedLaps: {},   // { driverNumber: 'fastest' or lapNumber }
 
     // Colors for the 4 driver slots
     slotColors: ['#4477AA', '#EE6677', '#228833', '#CCBB44']
@@ -92,7 +92,7 @@ function initializeEmptySelectors() {
         `;
     }
 
-    document.getElementById('lap-selector').innerHTML = '<select id="lap-select" disabled><option>Select drivers first...</option></select>';
+    document.getElementById('lap-selectors-container').innerHTML = '';
 }
 
 // Setup event listeners
@@ -108,6 +108,8 @@ function setupEventListeners() {
             }
         });
     }
+
+    document.getElementById('load-data-button').addEventListener('click', loadAllData);
 }
 
 // Handle year change
@@ -287,36 +289,40 @@ function populateDriverSelectors() {
 async function handleDriverChange(slotIndex, driverNumber) {
     console.log(`Driver slot ${slotIndex + 1} changed to:`, driverNumber);
 
+    const oldDriverNumber = state.selectedDrivers[slotIndex] ? state.selectedDrivers[slotIndex].driver_number : null;
+
     if (!driverNumber) {
-        // Se deseleziono un driver, resetto tutti i successivi a null
+        // Driver deselected
+        if (oldDriverNumber) {
+            delete state.lapsByDriver[oldDriverNumber];
+            delete state.selectedLaps[oldDriverNumber];
+            delete state.telemetryData[oldDriverNumber];
+        }
         state.selectedDrivers[slotIndex] = null;
+        // Also clear subsequent drivers
         for (let i = slotIndex + 1; i < 4; i++) {
-            state.selectedDrivers[i] = null;
+            const subsequentDriver = state.selectedDrivers[i];
+            if (subsequentDriver) {
+                delete state.lapsByDriver[subsequentDriver.driver_number];
+                delete state.selectedLaps[subsequentDriver.driver_number];
+                delete state.telemetryData[subsequentDriver.driver_number];
+                state.selectedDrivers[i] = null;
+            }
         }
     } else {
+        // Driver selected
         const driver = state.availableDrivers.find(d => d.driver_number == driverNumber);
         state.selectedDrivers[slotIndex] = { ...driver, color: state.slotColors[slotIndex] };
+        if (oldDriverNumber && oldDriverNumber !== driverNumber) {
+            delete state.lapsByDriver[oldDriverNumber];
+            delete state.selectedLaps[oldDriverNumber];
+            delete state.telemetryData[oldDriverNumber];
+        }
     }
 
     populateDriverSelectors();
-
-    const selectedDrivers = state.selectedDrivers.filter(d => d);
-    if (selectedDrivers.length > 0) {
-        try {
-            showLoading();
-            const laps = await API.getLaps(state.selectedSession.session_key, selectedDrivers.map(d => d.driver_number));
-            state.laps = laps;
-            console.log('Available laps:', laps);
-
-            populateLapSelector();
-        } catch (error) {
-            console.error('Error loading laps:', error);
-        } finally {
-            hideLoading();
-        }
-    } else {
-        resetLapSelector();
-    }
+    updateLapSelectors();
+    updateCharts();
 }
 
 // Reset functions
@@ -332,85 +338,74 @@ function resetDriverSelectors() {
     }
 }
 
-function resetLapSelector() {
-    document.getElementById('lap-selector').innerHTML = '<select id="lap-select" disabled><option>Select drivers first...</option></select>';
-}
+function updateLapSelectors() {
+    const container = document.getElementById('lap-selectors-container');
+    container.innerHTML = ''; // Clear previous selectors
 
-function populateLapSelector() {
-    const container = document.getElementById('lap-selector');
-    container.innerHTML = '';
+    state.selectedDrivers.forEach(driver => {
+        if (!driver) return;
 
-    const select = document.createElement('select');
-    select.id = 'lap-select';
+        const driverContainer = document.createElement('div');
+        driverContainer.classList.add('control-section');
+        driverContainer.innerHTML = `<h3>Lap - ${driver.name_acronym}</h3>`;
 
-    const defaultOption = document.createElement('option');
-    defaultOption.value = '';
-    defaultOption.textContent = 'Select lap...';
-    select.appendChild(defaultOption);
+        const selector = document.createElement('select');
+        selector.id = `lap-select-${driver.driver_number}`;
+        selector.dataset.driverNumber = driver.driver_number;
 
-    // Aggiungi giri
-    state.laps.forEach(lap => {
-        const option = document.createElement('option');
-        option.value = lap;
-        option.textContent = `Lap ${lap}`;
-        select.appendChild(option);
-    });
+        // Add options
+        const defaultOption = document.createElement('option');
+        defaultOption.value = '';
+        defaultOption.textContent = 'Select lap...';
+        selector.appendChild(defaultOption);
 
-    container.appendChild(select);
+        const fastestOption = document.createElement('option');
+        fastestOption.value = 'fastest';
+        fastestOption.textContent = 'Fastest Lap';
+        selector.appendChild(fastestOption);
 
-    // Bottone per selezionare giro più veloce
-    const fastestButton = document.createElement('button');
-    fastestButton.textContent = 'Seleziona giro più veloce';
-    fastestButton.classList.add('fastest-lap-button');
-    fastestButton.addEventListener('click', async () => {
-        if (!state.selectedSession || state.selectedDrivers.every(d => !d)) return;
-
-        showLoading();
-        try {
-            const sessionKey = state.selectedSession.session_key;
-            const driverNumbers = state.selectedDrivers
-                .filter(d => d)
-                .map(d => d.driver_number);
-
-            const fastest = await API.getFastestLap(sessionKey, driverNumbers);
-            console.log('Fastest laps per driver:', fastest);
-
-            await TelemetryManager.loadForFastestLaps(fastest);
-            updateCharts();
-
-            const msg = Object.entries(fastest)
-                .map(([dn, lap]) => {
-                    const driver = state.selectedDrivers.find(d => d.driver_number == dn);
-                    return `${driver.name_acronym}: Lap ${lap}`;
-                })
-                .join('\n');
-
-            console.log('Fastest laps loaded:\n' + msg);
-            select.value = '';
-
-        } catch (error) {
-            console.error('Error loading fastest laps:', error);
-            alert('Error loading fastest laps.');
-        } finally {
-            hideLoading();
+        // Populate laps if available
+        if (state.lapsByDriver[driver.driver_number]) {
+            state.lapsByDriver[driver.driver_number].forEach(lap => {
+                const option = document.createElement('option');
+                option.value = lap.lap_number;
+                if (lap.lap_duration) {
+                    //lap duration is in seconds, format it as mm:ss
+                    const minutes = Math.floor(lap.lap_duration / 60);
+                    const seconds = (lap.lap_duration % 60).toFixed(3);
+                    lap.lap_duration = `${minutes}:${seconds.padStart(2, '0')}`;
+                    option.textContent = `Lap ${lap.lap_number} - ${lap.lap_duration}`;
+                    selector.appendChild(option);
+                }
+                else {
+                    option.textContent = `Lap ${lap.lap_number} - `;
+                    selector.appendChild(option);
+                }
+            });
         }
-    });
 
-    container.appendChild(fastestButton);
+        selector.value = state.selectedLaps[driver.driver_number] || '';
 
+        driverContainer.appendChild(selector);
 
-    select.addEventListener('change', async (e) => {
-        const selectedLap = parseInt(e.target.value);
-        if (!isNaN(selectedLap)) {
-            // Carica i dati telemetria per il lap selezionato
-            await TelemetryManager.loadForLap(selectedLap);
+        // Tyre info
+        const tyreInfo = document.createElement('div');
+        tyreInfo.id = `tyre-info-${driver.driver_number}`;
+        tyreInfo.classList.add('tyre-info');
+        driverContainer.appendChild(tyreInfo);
 
-            // Aggiorna i grafici
-            updateCharts();
-        } else {
-            state.selectedLap = null;
-            state.telemetryData = {};
-            clearCharts();
+        container.appendChild(driverContainer);
+
+        selector.addEventListener('change', handleLapChange);
+
+        // Fetch laps for the driver if not already fetched
+        if (!state.lapsByDriver[driver.driver_number]) {
+            API.getLaps(state.selectedSession.session_key, driver.driver_number)
+                .then(laps => {
+                    state.lapsByDriver[driver.driver_number] = laps;
+                    updateLapSelectors(); // Re-render to populate the selector
+                })
+                .catch(error => console.error(`Error fetching laps for driver ${driver.driver_number}:`, error));
         }
     });
 }
@@ -418,32 +413,71 @@ function populateLapSelector() {
 
 
 // Handle lap change
-async function handleLapChange(event) {
-    const lap = parseInt(event.target.value);
-    if (!lap) return;
+function handleLapChange(event) {
+    const driverNumber = event.target.dataset.driverNumber;
+    const selectedValue = event.target.value;
 
-    console.log('Lap selected:', lap);
-    state.selectedLap = lap;
+    state.selectedLaps[driverNumber] = selectedValue;
+    updateLoadButtonState();
+}
 
+function updateLoadButtonState() {
+    const button = document.getElementById('load-data-button');
+    const allLapsSelected = state.selectedDrivers.every(driver => {
+        return !driver || state.selectedLaps[driver.driver_number];
+    });
+    button.disabled = !allLapsSelected;
+}
+
+async function loadAllData() {
     showLoading();
+    clearCharts();
+    state.telemetryData = {};
+
+    const driversToLoad = state.selectedDrivers.filter(d => d && state.selectedLaps[d.driver_number]);
+
     try {
-        const selectedDrivers = state.selectedDrivers.filter(d => d);
-        const sessionKey = state.selectedSession.session_key;
-        const driverNumbers = selectedDrivers.map(d => d.driver_number);
+        const dataPromises = driversToLoad.map(async (driver) => {
+            const driverNumber = driver.driver_number;
+            const selectedValue = state.selectedLaps[driverNumber];
+            let lapNumber;
 
-        const telemetryData = await API.getCarData(sessionKey, driverNumbers, lap);
-        state.telemetryData = {};
+            if (selectedValue === 'fastest') {
+                const fastestLap = await API.getFastestLap(state.selectedSession.session_key, driverNumber);
+                lapNumber = fastestLap.lap_number;
+                // Update selector and info in the main thread
+                document.getElementById(`lap-select-${driverNumber}`).value = lapNumber;
+                const tyreInfo = document.getElementById(`tyre-info-${driverNumber}`);
+                tyreInfo.innerHTML = `Fastest: Lap ${lapNumber}`;
+            } else {
+                lapNumber = selectedValue;
+            }
 
-        driverNumbers.forEach((driverNumber, idx) => {
-            state.telemetryData[driverNumber] = {
-                data: telemetryData[idx],
-                driver: selectedDrivers.find(d => d.driver_number === driverNumber)
+            const carData = await API.getCarData(state.selectedSession.session_key, driverNumber, lapNumber);
+            const lapInfo = state.lapsByDriver[driverNumber].find(l => l.lap_number == lapNumber);
+            if (lapInfo) {
+                const tyreInfo = document.getElementById(`tyre-info-${driverNumber}`);
+                tyreInfo.innerHTML += ` | Compound: ${lapInfo.compound}`;
+            }
+
+            return {
+                driverNumber,
+                data: {
+                    data: carData,
+                    driver: driver,
+                    color: driver.color
+                }
             };
         });
 
-        console.log('Telemetry data:', state.telemetryData);
+        const results = await Promise.all(dataPromises);
+        results.forEach(result => {
+            state.telemetryData[result.driverNumber] = result.data;
+        });
+
+        updateCharts();
     } catch (error) {
-        console.error('Error loading telemetry data:', error);
+        console.error('Error loading data:', error);
     } finally {
         hideLoading();
     }
