@@ -338,6 +338,10 @@ function resetDriverSelectors() {
     }
 }
 
+function resetLapSelector() {
+    document.getElementById('lap-selectors-container').innerHTML = '';
+}
+
 function updateLapSelectors() {
     const container = document.getElementById('lap-selectors-container');
     container.innerHTML = ''; // Clear previous selectors
@@ -369,18 +373,17 @@ function updateLapSelectors() {
             state.lapsByDriver[driver.driver_number].forEach(lap => {
                 const option = document.createElement('option');
                 option.value = lap.lap_number;
-                if (lap.lap_duration) {
-                    //lap duration is in seconds, format it as mm:ss
-                    const minutes = Math.floor(lap.lap_duration / 60);
-                    const seconds = (lap.lap_duration % 60).toFixed(3);
-                    lap.lap_duration = `${minutes}:${seconds.padStart(2, '0')}`;
-                    option.textContent = `Lap ${lap.lap_number} - ${lap.lap_duration}`;
-                    selector.appendChild(option);
+                let lapDuration = lap.lap_duration;
+                if (lapDuration === null) {
+                    lapDuration = 'N/A'; // Handle null duration
+                } else if (typeof lapDuration === 'number') {
+                    // convert lap duration to a mm:ss format
+                    const minutes = Math.floor(lapDuration / 60);
+                    const seconds = (lapDuration % 60).toFixed(3);
+                    lapDuration = `${minutes}:${seconds.padStart(6, '0')}`; // Ensure 2 digits for seconds
                 }
-                else {
-                    option.textContent = `Lap ${lap.lap_number} - `;
-                    selector.appendChild(option);
-                }
+                option.textContent = `Lap ${lap.lap_number} - ${lapDuration}`;
+                selector.appendChild(option);
             });
         }
 
@@ -444,9 +447,15 @@ async function loadAllData() {
 
             if (selectedValue === 'fastest') {
                 const fastestLap = await API.getFastestLap(state.selectedSession.session_key, driverNumber);
-                lapNumber = fastestLap.lap_number;
-                // Update selector and info in the main thread
-                document.getElementById(`lap-select-${driverNumber}`).value = lapNumber;
+                if (fastestLap) {
+                    lapNumber = fastestLap.lap_number;
+                    // Update selector and info in the main thread
+                    document.getElementById(`lap-select-${driverNumber}`).value = lapNumber;
+                } else {
+                    // Handle case where no fastest lap is found
+                    console.warn(`No fastest lap found for driver ${driverNumber}`);
+                    return null; // Skip this driver
+                }
                 const tyreInfo = document.getElementById(`tyre-info-${driverNumber}`);
                 tyreInfo.innerHTML = `Fastest: Lap ${lapNumber}`;
             } else {
@@ -455,8 +464,11 @@ async function loadAllData() {
 
             const carData = await API.getCarData(state.selectedSession.session_key, driverNumber, lapNumber);
             const lapInfo = state.lapsByDriver[driverNumber].find(l => l.lap_number == lapNumber);
+            const tyreInfo = document.getElementById(`tyre-info-${driverNumber}`);
+            if (selectedValue !== 'fastest') {
+                tyreInfo.innerHTML = ''; // Clear previous info
+            }
             if (lapInfo) {
-                const tyreInfo = document.getElementById(`tyre-info-${driverNumber}`);
                 tyreInfo.innerHTML += ` | Compound: ${lapInfo.compound}`;
             }
 
@@ -472,13 +484,14 @@ async function loadAllData() {
 
         const results = await Promise.all(dataPromises);
         results.forEach(result => {
-            state.telemetryData[result.driverNumber] = result.data;
+            if (result) { // Check if the result is not null
+                state.telemetryData[result.driverNumber] = result.data;
+            }
         });
-
-        updateCharts();
     } catch (error) {
         console.error('Error loading data:', error);
     } finally {
+        updateCharts();
         hideLoading();
     }
 }

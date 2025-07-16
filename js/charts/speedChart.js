@@ -1,183 +1,298 @@
-// Modulo API per OpenF1
-const API = {
-    // URL base dell'API
-    baseURL: 'https://api.openf1.org/v1',
+window.SpeedChart = {
 
-    // Cache per ottimizzare le richieste
-    cache: {
-        sessions: null,
-        drivers: new Map(),
-        laps: new Map()
+    parseLapTime(lapTimeStr) {
+        if (typeof lapTimeStr !== 'string') return new Date(NaN);
+        const [minSec, ms] = lapTimeStr.split('.');
+        if (!minSec) return new Date(NaN);
+        const [minutes, seconds] = minSec.split(':').map(Number);
+        return new Date(0, 0, 0, 0, minutes, seconds, Number(ms || 0));
     },
 
-    // Metodo helper per fare richieste
-    async fetchData(endpoint, params = {}) {
-        try {
-            const url = new URL(`${this.baseURL}${endpoint}`);
-            Object.keys(params).forEach(key => {
-                if (params[key] !== null && params[key] !== undefined) {
-                    url.searchParams.append(key, params[key]);
-                }
-            });
 
-            console.log('Fetching:', url.toString());
+    create() {
+        const container = d3.select('#speed-chart');
+        container.selectAll('*').remove(); // Clear existing chart
 
-            const response = await fetch(url);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
-            return data;
-        } catch (error) {
-            console.error('API Error:', error);
-            throw error;
+        if (!state.telemetryData || Object.keys(state.telemetryData).length === 0) {
+            container.append('div')
+                .attr('class', 'no-data')
+                .text('Select a lap to view telemetry data');
+            return;
         }
-    },
 
-    // Ottieni tutte le sessioni
-    async getAllSessions() {
-        if (!this.cache.sessions) {
-            const data = await this.fetchData('/sessions');
-            this.cache.sessions = data;
+        // Dimensioni e margini
+        const containerRect = container.node().getBoundingClientRect();
+        const margin = { top: 20, right: 100, bottom: 70, left: 70 };
+        const width = containerRect.width - margin.left - margin.right;
+        const height = containerRect.height - margin.top - margin.bottom;
+
+        // Crea SVG
+        const svg = container.append('svg')
+            .attr('width', width + margin.left + margin.right)
+            .attr('height', height + margin.top + margin.bottom);
+
+        const g = svg.append('g')
+            .attr('transform', `translate(${margin.left},${margin.top})`);
+
+        // Prepara i dati
+        const allData = this.prepareData();
+
+        if (allData.length === 0) {
+            container.append('div')
+                .attr('class', 'no-data')
+                .text('No speed data available for selected lap');
+            return;
         }
-        return this.cache.sessions;
+
+        // Scale
+        const scales = this.createScales(allData, width, height);
+
+        // Assi
+        this.createAxes(g, scales, width, height, margin);
+
+        // Linee
+        this.createLines(g, allData, scales);
+
+        // Legenda
+        this.createLegend(g, allData, width);
+
+        // Tooltip
+        this.createTooltip(g, allData, scales, width, height);
     },
 
-    // Ottieni anni disponibili
-    async getAvailableYears() {
-        const sessions = await this.getAllSessions();
-        const years = [...new Set(sessions.map(s => new Date(s.date_start).getFullYear()))];
-        return years.sort((a, b) => b - a); // Ordine decrescente
-    },
+    prepareData() {
+        const allData = [];
+        const drivers = Object.keys(state.telemetryData);
 
-    // Ottieni GP per un anno
-    async getGrandPrixByYear(year) {
-        const sessions = await this.getAllSessions();
-        const yearSessions = sessions.filter(s =>
-            new Date(s.date_start).getFullYear() === year
-        );
+        drivers.forEach(driverNumber => {
+            const driverData = state.telemetryData[driverNumber];
+            const data = driverData.data;
+            const color = driverData.color;
+            const driverName = driverData.driver.name_acronym;
 
-        // Raggruppa per GP (location + country)
-        const gpMap = new Map();
-        yearSessions.forEach(session => {
-            const gpKey = `${session.location}_${session.country_name}`;
-            if (!gpMap.has(gpKey)) {
-                gpMap.set(gpKey, {
-                    location: session.location,
-                    country_name: session.country_name,
-                    country_code: session.country_code,
-                    circuit_short_name: session.circuit_short_name,
-                    sessions: []
+            // Filtra e ordina i dati per tempo
+            const validData = data
+                .filter(d => d.speed != null && d.date != null)
+                .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            if (validData.length > 0) {
+                // 🏁 Calcola la distanza cumulativa dal punto di partenza
+                const dataWithDistance = this.calculateDistance(validData);
+
+                allData.push({
+                    driverNumber,
+                    driverName,
+                    color,
+                    data: dataWithDistance
                 });
             }
-            gpMap.get(gpKey).sessions.push(session);
         });
 
-        return Array.from(gpMap.values());
+        return allData;
     },
 
-    // Ottieni sessioni per un GP
-    async getSessionsByGP(year, location, country) {
-        const sessions = await this.getAllSessions();
-        return sessions.filter(s => {
-            const sessionYear = new Date(s.date_start).getFullYear();
-            return sessionYear === year &&
-                s.location === location &&
-                s.country_name === country;
-        }).sort((a, b) => new Date(a.date_start) - new Date(b.date_start));
-    },
 
-    // Ottieni i driver di una sessione (con cache)
-    async getDrivers(sessionKey) {
-        if (!this.cache.drivers.has(sessionKey)) {
-            const data = await this.fetchData('/drivers', {
-                session_key: sessionKey
+    calculateDistance(telemetryData) {
+        const dataWithDistance = [];
+        let cumulativeDistance = 0;
+
+        for (let i = 0; i < telemetryData.length; i++) {
+            const point = telemetryData[i];
+
+            if (i > 0) {
+                const prevPoint = telemetryData[i - 1];
+                const timeDiff = (new Date(point.date) - new Date(prevPoint.date)) / 1000; // secondi
+                const avgSpeed = (point.speed + prevPoint.speed) / 2; // km/h media
+                const speedMs = avgSpeed * 1000 / 3600; // converti in m/s
+                const distanceIncrement = speedMs * timeDiff; // metri
+
+                cumulativeDistance += distanceIncrement;
+            }
+
+            dataWithDistance.push({
+                ...point,
+                distance: cumulativeDistance
             });
+        }
 
-            // Rimuovi duplicati e mantieni l'ultimo record per ogni driver
-            const driversMap = new Map();
-            data.forEach(driver => {
-                driversMap.set(driver.driver_number, driver);
+        console.log(`📏 Driver telemetry: ${dataWithDistance.length} points, total distance: ${(cumulativeDistance / 1000).toFixed(2)} km`);
+
+        return dataWithDistance;
+    },
+
+
+    createScales(allData, width, height) {
+        const allPoints = allData.flatMap(d => d.data);
+        const xExtent = d3.extent(allPoints, d => d.distance); // 📏 Usa distanza invece di tempo
+        const yExtent = d3.extent(allPoints, d => d.speed);
+
+        const yRange = yExtent[1] - yExtent[0];
+        const yPadding = yRange * 0.1; // 10% di padding
+        const yDomainZoomed = [
+            yExtent[0] - yPadding,
+            yExtent[1] + yPadding
+        ];
+
+        const xScale = d3.scaleLinear()
+            .domain(xExtent)
+            .range([0, width]);
+
+        const yScale = d3.scaleLinear()
+            .domain(yDomainZoomed) // 🔍 Usa il dominio zoomato
+            .range([height, 0]);
+
+        return { xScale, yScale };
+    },
+
+    createAxes(g, scales, width, height, margin) {
+        const xAxis = d3.axisBottom(scales.xScale)
+            .tickFormat(d => d3.format('.0f')(d) + ' m') // Formattazione distanza
+
+        g.append('g')
+            .attr('transform', `translate(0,${height})`)
+            .call(xAxis);
+
+        g.append('g')
+            .call(d3.axisLeft(scales.yScale));
+
+        // Etichette assi aggiornate
+        g.append('text')
+            .attr('transform', 'rotate(-90)')
+            .attr('y', 0 - margin.left)
+            .attr('x', 0 - (height / 2))
+            .attr('dy', '1em')
+            .style('text-anchor', 'middle')
+            .style('fill', '#fff')
+            .text('Speed (km/h)');
+
+        g.append('text')
+            .attr('x', width / 2)
+            .attr('y', height + margin.bottom - 15)
+            .style('text-anchor', 'middle')
+            .style('fill', '#fff')
+            .style('font-size', '12px')
+            .style('font-family', 'inherit')
+            .text('Distance (m)');
+    },
+
+    createLines(g, allData, scales) {
+        const line = d3.line()
+            .x(d => scales.xScale(d.distance))
+            .y(d => scales.yScale(d.speed))
+            .curve(d3.curveMonotoneX);
+
+        allData.forEach(driverData => {
+            g.append('path')
+                .datum(driverData.data)
+                .attr('fill', 'none')
+                .attr('stroke', driverData.color)
+                .attr('stroke-width', 2)
+                .attr('d', line);
+        });
+    },
+
+    createLegend(g, allData, width) {
+        const legend = g.append('g')
+            .attr('class', 'legend')
+            .attr('transform', `translate(${width - 80}, 20)`);
+
+        allData.forEach((driverData, i) => {
+            const legendRow = legend.append('g')
+                .attr('transform', `translate(0, ${i * 20})`);
+
+            legendRow.append('circle')
+                .attr('r', 5)
+                .attr('fill', driverData.color);
+
+            legendRow.append('text')
+                .attr('x', 15)
+                .attr('y', 0)
+                .attr('dy', '0.35em')
+                .style('font-size', '12px')
+                .style('fill', '#fff')
+                .text(driverData.driverName);
+        });
+    },
+
+    createTooltip(g, allData, scales, width, height) {
+        const tooltip = d3.select('#speed-chart').append('div')
+            .attr('class', 'tooltip')
+            .style('opacity', 0);
+
+        const tooltipLine = g.append('line')
+            .attr('class', 'tooltip-line')
+            .attr('stroke', '#fff')
+            .attr('stroke-width', 1)
+            .attr('stroke-dasharray', '3,3')
+            .style('opacity', 0);
+
+        const tooltipCircles = g.selectAll('.tooltip-circle')
+            .data(allData)
+            .enter().append('circle')
+            .attr('class', 'tooltip-circle')
+            .attr('r', 5)
+            .attr('fill', d => d.color)
+            .style('opacity', 0);
+
+        const bisectDistance = d3.bisector(d => d.distance).left;
+
+        const overlay = g.append('rect')
+            .attr('class', 'overlay')
+            .attr('width', width)
+            .attr('height', height)
+            .style('fill', 'none')
+            .style('pointer-events', 'all')
+            .on('mouseover', () => {
+                tooltip.style('opacity', 1);
+                tooltipLine.style('opacity', 1);
+                tooltipCircles.style('opacity', 1);
+            })
+            .on('mouseout', () => {
+                tooltip.style('opacity', 0);
+                tooltipLine.style('opacity', 0);
+                tooltipCircles.style('opacity', 0);
+            })
+            .on('mousemove', (event) => {
+                const [x, y] = d3.pointer(event, g.node());
+                const x0 = scales.xScale.invert(x);
+
+                let tooltipData = [];
+
+                allData.forEach(driver => {
+                    const i = bisectDistance(driver.data, x0, 1);
+                    const d0 = driver.data[i - 1];
+                    const d1 = driver.data[i];
+                    if (!d0 || !d1) return;
+                    const d = x0 - d0.distance > d1.distance - x0 ? d1 : d0;
+
+                    tooltipData.push({
+                        driverName: driver.driverName,
+                        speed: d.speed,
+                        color: driver.color,
+                        x: scales.xScale(d.distance),
+                        y: scales.yScale(d.speed)
+                    });
+                });
+
+                tooltipLine
+                    .attr('x1', tooltipData[0].x)
+                    .attr('x2', tooltipData[0].x)
+                    .attr('y1', 0)
+                    .attr('y2', height);
+
+                tooltipCircles
+                    .data(tooltipData)
+                    .attr('cx', d => d.x)
+                    .attr('cy', d => d.y);
+
+                tooltip
+                    .html(tooltipData.map(d => `
+                        <div style="color: ${d.color}">
+                            ${d.driverName}: ${d.speed.toFixed(0)} km/h
+                        </div>
+                    `).join(''))
+                    .style('left', (event.pageX + 15) + 'px')
+                    .style('top', (event.pageY - 28) + 'px');
             });
-
-            const uniqueDrivers = Array.from(driversMap.values())
-                .sort((a, b) => a.driver_number - b.driver_number);
-
-            this.cache.drivers.set(sessionKey, uniqueDrivers);
-        }
-
-        return this.cache.drivers.get(sessionKey);
-    },
-
-    // Ottieni dati telemetria
-    async getCarData(sessionKey, driverNumber, lapNumber) {
-        // L'API non supporta il filtraggio per numero di giro, quindi recuperiamo tutti i dati
-        // e li filtriamo lato client. Questo non è efficiente, ma è un limite dell'API.
-        const allCarData = await this.fetchData('/car_data', {
-            session_key: sessionKey,
-            driver_number: driverNumber
-        });
-
-        // Per filtrare per giro, abbiamo bisogno dei dati dei giri
-        const laps = await this.getLaps(sessionKey, driverNumber);
-        const targetLap = laps.find(l => l.lap_number == lapNumber);
-
-        if (!targetLap) {
-            console.error(`Lap ${lapNumber} not found for driver ${driverNumber}`);
-            return [];
-        }
-
-        const lapStartTime = new Date(targetLap.date_start);
-        const lapEndTime = new Date(lapStartTime.getTime() + (targetLap.lap_duration * 1000));
-
-        return allCarData.filter(d => {
-            const pointDate = new Date(d.date);
-            return pointDate >= lapStartTime && pointDate <= lapEndTime;
-        });
-    },
-
-    // Ottieni lista dei giri
-    async getLaps(sessionKey, driverNumber) {
-        const cacheKey = `${sessionKey}-${driverNumber}`;
-        if (this.cache.laps.has(cacheKey)) {
-            return this.cache.laps.get(cacheKey);
-        }
-
-        const lapsData = await this.fetchData('/laps', {
-            session_key: sessionKey,
-            driver_number: driverNumber
-        });
-
-        const stintsData = await this.fetchData('/stints', {
-            session_key: sessionKey,
-            driver_number: driverNumber
-        });
-
-        // Arricchisci i dati dei giri con la mescola degli pneumatici dagli stint
-        const enrichedLaps = lapsData.map(lap => {
-            const stint = stintsData.find(s => lap.lap_number >= s.lap_start && lap.lap_number <= s.lap_end);
-            return {
-                ...lap,
-                compound: stint ? stint.compound : 'Unknown'
-            };
-        });
-
-        const result = enrichedLaps.filter(l => l.lap_number).sort((a, b) => a.lap_number - b.lap_number);
-        this.cache.laps.set(cacheKey, result);
-        return result;
-    },
-
-    // Ottieni il giro più veloce per un pilota
-    async getFastestLap(sessionKey, driverNumber) {
-        const laps = await this.getLaps(sessionKey, driverNumber);
-        if (!laps || laps.length === 0) return null;
-
-        const validLaps = laps.filter(l => typeof l.lap_duration === 'number');
-        if (validLaps.length === 0) return null;
-
-        return validLaps.reduce((best, lap) =>
-            lap.lap_duration < best.lap_duration ? lap : best
-        );
     }
 };
