@@ -179,5 +179,22 @@ const API = {
         return validLaps.reduce((best, lap) =>
             lap.lap_duration < best.lap_duration ? lap : best
         );
+    },
+
+
+    async getLocationData(sessionKey, driverNumbers) {
+        const driverQuery = Array.isArray(driverNumbers)
+            ? driverNumbers.join(',')
+            : driverNumbers;
+
+        const url = `${this.baseURL}/location?session_key=${sessionKey}&driver_number=${driverQuery}`;
+
+        try {
+            const response = await fetch(url);
+            return await response.json();
+        } catch (error) {
+            console.error('Error fetching location data:', error);
+            return [];
+        }
     }
 };

@@ -36,9 +36,22 @@ const TelemetryManager = {
                     lap
                 );
 
+                // Aggiungi dati di posizione X,Y
+                const telemetryWithPosition = await this.enrichWithPositionData(
+                    lapTelemetry,
+                    sessionKey,
+                    driverNumber
+                );
+
+                // Aggiungi calcolo della distanza cumulativa
+                const telemetryWithDistance = this.calculateCumulativeDistance(telemetryWithPosition);
+
                 state.telemetryData[driverNumber] = {
-                    data: lapTelemetry,
+                    data: telemetryWithDistance,
                     driver: driver,
+                    driverName: driver.name_acronym || driver.full_name,
+                    driverNumber: driverNumber,
+                    acronym: driver.name_acronym,
                     color: state.slotColors[state.selectedDrivers.findIndex(d => d && d.driver_number === driverNumber)],
                     lap: lap
                 };
@@ -103,6 +116,97 @@ const TelemetryManager = {
         }
     },
 
+    // Nuova funzione per aggiungere i dati di posizione X,Y
+    async enrichWithPositionData(telemetryData, sessionKey, driverNumber) {
+        try {
+            console.log(`📍 Loading position data for driver ${driverNumber}`);
+
+            // Carica i dati di posizione dall'endpoint /location
+            const positionData = await API.fetchData('/location', {
+                session_key: sessionKey,
+                driver_number: driverNumber
+            });
+
+            if (!positionData || positionData.length === 0) {
+                console.warn(`⚠️ No position data found for driver ${driverNumber}`);
+                return telemetryData;
+            }
+
+            // Crea una mappa per accesso rapido ai dati di posizione per timestamp
+            const positionMap = new Map();
+            positionData.forEach(pos => {
+                const timestamp = new Date(pos.date).getTime();
+                positionMap.set(timestamp, { x: pos.x, y: pos.y, z: pos.z });
+            });
+
+            // Arricchisci i dati telemetria con le coordinate X,Y
+            const enrichedData = telemetryData.map(point => {
+                const pointTimestamp = new Date(point.date).getTime();
+
+                // Cerca la posizione esatta o la più vicina
+                let position = positionMap.get(pointTimestamp);
+
+                if (!position) {
+                    // Se non c'è match esatto, trova la posizione più vicina nel tempo
+                    let closestTime = Infinity;
+                    let closestPosition = null;
+
+                    for (const [timestamp, pos] of positionMap) {
+                        const timeDiff = Math.abs(timestamp - pointTimestamp);
+                        if (timeDiff < closestTime && timeDiff < 1000) { // Max 1 secondo di differenza
+                            closestTime = timeDiff;
+                            closestPosition = pos;
+                        }
+                    }
+
+                    position = closestPosition;
+                }
+
+                return {
+                    ...point,
+                    x: position ? position.x : 0,
+                    y: position ? position.y : 0,
+                    z: position ? position.z : 0
+                };
+            });
+
+            console.log(`✅ Enriched ${enrichedData.length} telemetry points with position data`);
+            return enrichedData;
+
+        } catch (error) {
+            console.error(`❌ Error loading position data for driver ${driverNumber}:`, error);
+            // In caso di errore, ritorna i dati originali
+            return telemetryData;
+        }
+    },
+
+    // Calcola la distanza cumulativa se non presente
+    calculateCumulativeDistance(telemetryData) {
+        if (!telemetryData || telemetryData.length === 0) return telemetryData;
+
+        // Se la distanza è già presente, ritorna i dati così come sono
+        if (telemetryData[0].distance !== undefined) {
+            return telemetryData;
+        }
+
+        // Altrimenti calcola la distanza cumulativa
+        let cumulativeDistance = 0;
+        const dataWithDistance = telemetryData.map((point, index) => {
+            if (index > 0) {
+                const prevPoint = telemetryData[index - 1];
+                const timeDiff = (new Date(point.date) - new Date(prevPoint.date)) / 1000; // secondi
+                const avgSpeed = (point.speed + prevPoint.speed) / 2 / 3.6; // m/s
+                cumulativeDistance += avgSpeed * timeDiff;
+            }
+
+            return {
+                ...point,
+                distance: cumulativeDistance
+            };
+        });
+
+        return dataWithDistance;
+    },
 
     // Carica telemetria per i giri più veloci (ogni driver sul suo giro migliore)
     async loadForFastestLaps(fastestLaps) {
@@ -128,12 +232,25 @@ const TelemetryManager = {
                         lapNumber
                     );
 
-                    const driver = state.selectedDrivers.find(d => d.driver_number == driverNumber);
+                    // Aggiungi dati di posizione X,Y
+                    const telemetryWithPosition = await this.enrichWithPositionData(
+                        lapTelemetry,
+                        sessionKey,
+                        parseInt(driverNumber)
+                    );
+
+                    // Aggiungi calcolo della distanza cumulativa
+                    const telemetryWithDistance = this.calculateCumulativeDistance(telemetryWithPosition);
+
+                    const driver = state.selectedDrivers.find(d => d && d.driver_number == driverNumber);
                     const slotIndex = state.selectedDrivers.findIndex(d => d && d.driver_number == driverNumber);
 
                     state.telemetryData[driverNumber] = {
-                        data: lapTelemetry,
+                        data: telemetryWithDistance,
                         driver: driver,
+                        driverName: driver.name_acronym || driver.full_name,
+                        driverNumber: parseInt(driverNumber),
+                        acronym: driver.name_acronym,
                         color: state.slotColors[slotIndex],
                         lap: lapNumber
                     };

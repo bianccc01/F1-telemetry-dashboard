@@ -21,6 +21,8 @@ const state = {
 
 };
 
+let trackMapInstance = null;
+
 // Helper functions
 function showLoading() {
     document.getElementById('loading-overlay').classList.remove('hidden');
@@ -110,6 +112,13 @@ function setupEventListeners() {
     }
 
     document.getElementById('load-data-button').addEventListener('click', loadAllData);
+
+    const chartsContainer = document.querySelector('.charts-container');
+    const trackMapSidebar = document.querySelector('.track-map-sidebar');
+
+    chartsContainer.addEventListener('scroll', () => {
+        trackMapSidebar.style.top = `${-chartsContainer.scrollTop}px`;
+    });
 }
 
 // Handle year change
@@ -564,14 +573,79 @@ async function loadTelemetryForLap(lap) {
 }
 
 function updateCharts() {
+
+    this.clearCharts();
+
+    // AGGIUNGI QUESTO LOG
+    console.log('🔍 TELEMETRY DATA CHECK:', state.telemetryData);
+
+    // Verifica se ci sono coordinate X,Y
+    const firstDriver = Object.keys(state.telemetryData)[0];
+    if (firstDriver && state.telemetryData[firstDriver].data.length > 0) {
+        console.log('📍 First data point:', state.telemetryData[firstDriver].data[0]);
+        console.log('📍 Has X,Y coordinates?',
+            state.telemetryData[firstDriver].data[0].x !== undefined,
+            state.telemetryData[firstDriver].data[0].y !== undefined
+        );
+    }
+
     // Aggiorna i grafici con i dati telemetria caricati
     SpeedChart.create(state.telemetryData);
+
+    // Inizializza la track map
+    const trackMapContainer = document.querySelector('#track-map');
+    if (trackMapContainer && Object.keys(state.telemetryData).length > 0) {
+        // Rimuovi il placeholder se esiste ancora
+        const placeholder = trackMapContainer.querySelector('.track-map-placeholder');
+        if (placeholder) {
+            placeholder.remove();
+        }
+
+        // Crea la track map
+        if (!trackMapInstance) {
+            trackMapInstance = new TrackMap('#track-map');
+            TrackMap.setInstance(trackMapInstance);
+        }
+
+        trackMapInstance.initialize(state.telemetryData);
+
+        // Aggiorna le info della track
+        this.updateTrackInfo();
+    }
 }
 
 function clearCharts() {
     d3.select('#speed-chart').selectAll('*').remove();
     d3.select('#throttle-brake-chart').selectAll('*').remove();
     d3.select('#gear-chart').selectAll('*').remove();
+
+    if (trackMapInstance) {
+        trackMapInstance.clear();
+        trackMapInstance = null;
+        TrackMap.setInstance(null);
+    }
+
+    this.updateTrackInfo(0,0);
+}
+
+function updateTrackInfo(distance = 0, speed = 0) {
+    const sectorEl = document.getElementById('current-sector');
+    const speedEl = document.getElementById('current-speed');
+    const distanceEl = document.getElementById('current-distance');
+
+    if (sectorEl) sectorEl.textContent = `Sector: ${this.calculateSector(distance)}`;
+    if (speedEl) speedEl.textContent = `Speed: ${speed.toFixed(0)} km/h`;
+    if (distanceEl) distanceEl.textContent = `Distance: ${distance.toFixed(0)} m`;
+}
+
+function calculateSector(distance) {
+    // Assumendo una pista di ~5000m divisa in 3 settori
+    const trackLength = 5000; // Dovrai adattare questo valore per ogni circuito
+    const sectorLength = trackLength / 3;
+
+    if (distance < sectorLength) return 1;
+    if (distance < sectorLength * 2) return 2;
+    return 3;
 }
 
 
