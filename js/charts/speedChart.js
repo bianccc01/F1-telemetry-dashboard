@@ -236,6 +236,14 @@ window.SpeedChart = {
 
         const bisectDistance = d3.bisector(d => d.distance).left;
 
+        // Get track scales once
+        const firstDriverKey = Object.keys(state.telemetryData)[0];
+        const trackData = state.telemetryData[firstDriverKey].data;
+        const xExtent = d3.extent(trackData, d => d.x);
+        const yExtent = d3.extent(trackData, d => d.y);
+        const trackXScale = d3.scaleLinear().domain(xExtent).range([20, 280]);
+        const trackYScale = d3.scaleLinear().domain(yExtent).range([20, 280]);
+
         const overlay = g.append('rect')
             .attr('class', 'overlay')
             .attr('width', width)
@@ -257,15 +265,14 @@ window.SpeedChart = {
                 const x0 = scales.xScale.invert(x);
 
                 let tooltipData = [];
-                let avgSpeed = 0;
 
-                // Get track scales - RIMOSSO perché ora le scale sono nella TrackMap
-                // const firstDriverKey = Object.keys(state.telemetryData)[0];
-                // const trackData = state.telemetryData[firstDriverKey].data;
-                // const xExtent = d3.extent(trackData, d => d.x);
-                // const yExtent = d3.extent(trackData, d => d.y);
-                // const xScale = d3.scaleLinear().domain(xExtent).range([20, 280]);
-                // const yScale = d3.scaleLinear().domain(yExtent).range([20, 280]);
+                // Get track scales once
+                const firstDriverKey = Object.keys(state.telemetryData)[0];
+                const trackData = state.telemetryData[firstDriverKey].data;
+                const xExtent = d3.extent(trackData, d => d.x);
+                const yExtent = d3.extent(trackData, d => d.y);
+                const trackXScale = d3.scaleLinear().domain(xExtent).range([20, 280]);
+                const trackYScale = d3.scaleLinear().domain(yExtent).range([20, 280]);
 
                 allData.forEach(driver => {
                     const i = bisectDistance(driver.data, x0, 1);
@@ -282,31 +289,8 @@ window.SpeedChart = {
                         y: scales.yScale(d.speed)
                     });
 
-                    avgSpeed += d.speed;
-
-                    // Aggiorna la posizione sulla track map usando il metodo dell'istanza
-                    if (window.TrackMap && window.TrackMap.getInstance()) {
-                        window.TrackMap.getInstance().updateCarPosition(driver.driverNumber, d);
-                    }
+                    TrackMap.updateCarPosition(d, trackXScale, trackYScale);
                 });
-
-                // Aggiorna le info della track (settore, velocità, distanza)
-                if (tooltipData.length > 0) {
-                    avgSpeed = avgSpeed / tooltipData.length;
-
-                    // Aggiorna le info sotto la track map
-                    const sectorEl = document.getElementById('current-sector');
-                    const speedEl = document.getElementById('current-speed');
-                    const distanceEl = document.getElementById('current-distance');
-
-                    if (distanceEl) distanceEl.textContent = `Distance: ${x0.toFixed(0)} m`;
-                    if (speedEl) speedEl.textContent = `Speed: ${avgSpeed.toFixed(0)} km/h`;
-                    if (sectorEl) {
-                        // Calcola il settore (assumendo pista di ~5000m in 3 settori)
-                        const sector = x0 < 1667 ? 1 : x0 < 3334 ? 2 : 3;
-                        sectorEl.textContent = `Sector: ${sector}`;
-                    }
-                }
 
                 tooltipLine
                     .attr('x1', tooltipData[0].x)
@@ -321,12 +305,12 @@ window.SpeedChart = {
 
                 tooltip
                     .html(tooltipData.map(d => `
-            <div style="color: ${d.color}">
-                ${d.driverName}: ${d.speed.toFixed(0)} km/h
-            </div>
-        `).join(''))
+                        <div style="color: ${d.color}">
+                            ${d.driverName}: ${d.speed.toFixed(0)} km/h
+                        </div>
+                    `).join(''))
                     .style('left', (event.pageX + 15) + 'px')
                     .style('top', (event.pageY - 28) + 'px');
-            })
+            });
     }
 };

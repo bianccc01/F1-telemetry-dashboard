@@ -112,14 +112,11 @@ const API = {
 
     // Ottieni dati telemetria
     async getCarData(sessionKey, driverNumber, lapNumber) {
-        // L'API non supporta il filtraggio per numero di giro, quindi recuperiamo tutti i dati
-        // e li filtriamo lato client. Questo non è efficiente, ma è un limite dell'API.
-        const allCarData = await this.fetchData('/car_data', {
-            session_key: sessionKey,
-            driver_number: driverNumber
-        });
+        if (!driverNumber || !lapNumber) {
+            // Only fetch location data for the track outline
+            return await this.fetchData('/location', { session_key: sessionKey });
+        }
 
-        // Per filtrare per giro, abbiamo bisogno dei dati dei giri
         const laps = await this.getLaps(sessionKey, driverNumber);
         const targetLap = laps.find(l => l.lap_number == lapNumber);
 
@@ -131,10 +128,36 @@ const API = {
         const lapStartTime = new Date(targetLap.date_start);
         const lapEndTime = new Date(lapStartTime.getTime() + (targetLap.lap_duration * 1000));
 
-        return allCarData.filter(d => {
-            const pointDate = new Date(d.date);
-            return pointDate >= lapStartTime && pointDate <= lapEndTime;
+        // Fetch both car data and location data
+        const [carData, locationData] = await Promise.all([
+            this.fetchData('/car_data', { session_key: sessionKey, driver_number: driverNumber }),
+            this.fetchData('/location', { session_key: sessionKey, driver_number: driverNumber })
+        ]);
+
+        // Filter both datasets by lap time
+        const filterByTime = (data) => {
+            return data.filter(d => {
+                const pointDate = new Date(d.date);
+                return pointDate >= lapStartTime && pointDate <= lapEndTime;
+            });
+        };
+
+        const filteredCarData = filterByTime(carData);
+        const filteredLocationData = filterByTime(locationData);
+
+        // Merge the two datasets
+        const mergedData = filteredCarData.map(carPoint => {
+            const locationPoint = filteredLocationData.find(locPoint =>
+                Math.abs(new Date(locPoint.date) - new Date(carPoint.date)) < 100 // 100ms tolerance
+            );
+            return {
+                ...carPoint,
+                x: locationPoint ? locationPoint.x : null,
+                y: locationPoint ? locationPoint.y : null,
+            };
         });
+
+        return mergedData.filter(d => d.x !== null && d.y !== null);
     },
 
     // Ottieni lista dei giri
@@ -179,22 +202,5 @@ const API = {
         return validLaps.reduce((best, lap) =>
             lap.lap_duration < best.lap_duration ? lap : best
         );
-    },
-
-
-    async getLocationData(sessionKey, driverNumbers) {
-        const driverQuery = Array.isArray(driverNumbers)
-            ? driverNumbers.join(',')
-            : driverNumbers;
-
-        const url = `${this.baseURL}/location?session_key=${sessionKey}&driver_number=${driverQuery}`;
-
-        try {
-            const response = await fetch(url);
-            return await response.json();
-        } catch (error) {
-            console.error('Error fetching location data:', error);
-            return [];
-        }
     }
 };
