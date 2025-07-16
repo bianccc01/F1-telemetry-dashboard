@@ -112,9 +112,16 @@ const API = {
 
     // Ottieni dati telemetria
     async getCarData(sessionKey, driverNumber, lapNumber) {
+        if (!driverNumber) {
+            // No driver selected, we can't get any location data.
+            // This is used for drawing the track outline.
+            // The API requires a driver_number for the /location endpoint.
+            // To avoid an error, we return an empty array.
+            return [];
+        }
         if (!driverNumber || !lapNumber) {
             // Only fetch location data for the track outline
-            return await this.fetchData('/location', { session_key: sessionKey });
+            return await this.fetchData('/location', { session_key: sessionKey, driver_number: driverNumber });
         }
 
         const laps = await this.getLaps(sessionKey, driverNumber);
