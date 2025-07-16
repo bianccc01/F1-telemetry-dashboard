@@ -88,6 +88,18 @@ body {
     margin-bottom: 1rem;
 }
 
+
+.tooltip {
+    position: absolute;
+    background-color: rgba(0, 0, 0, 0.8);
+    color: #fff;
+    padding: 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    pointer-events: none;
+    transition: opacity 0.2s;
+}
+
 .chart {
     width: 100%;
     min-height: 480px;
