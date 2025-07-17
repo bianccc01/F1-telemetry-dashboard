@@ -620,10 +620,53 @@ async function loadTelemetryForLap(lap) {
 }
 
 function updateCharts() {
-    // Aggiorna i grafici con i dati telemetria caricati
     SpeedChart.create(state.telemetryData);
+    ThrottleChart.create(state.telemetryData);
+    BrakeChart.create(state.telemetryData);
+    GearChart.create(state.telemetryData);
     TrackMap.create(state.telemetryData);
     updateDriverInfo();
+
+    const charts = [
+        {
+            container: d3.select('#speed-chart'),
+            allData: SpeedChart.prepareData(),
+            scales: SpeedChart.createScales(SpeedChart.prepareData(), d3.select('#speed-chart').node().getBoundingClientRect().width - 170, d3.select('#speed-chart').node().getBoundingClientRect().height - 90),
+            g: d3.select('#speed-chart svg g'),
+            yValue: d => d.speed,
+            yLabel: 'km/h',
+            yFormat: d => d.toFixed(0)
+        },
+        {
+            container: d3.select('#throttle-chart'),
+            allData: ThrottleChart.prepareData(),
+            scales: ThrottleChart.createScales(ThrottleChart.prepareData(), d3.select('#throttle-chart').node().getBoundingClientRect().width - 170, d3.select('#throttle-chart').node().getBoundingClientRect().height - 90),
+            g: d3.select('#throttle-chart svg g'),
+            yValue: d => d.throttle,
+            yLabel: '%',
+            yFormat: d => d.toFixed(0)
+        },
+        {
+            container: d3.select('#brake-chart'),
+            allData: BrakeChart.prepareData(),
+            scales: BrakeChart.createScales(BrakeChart.prepareData(), d3.select('#brake-chart').node().getBoundingClientRect().width - 170, d3.select('#brake-chart').node().getBoundingClientRect().height - 90),
+            g: d3.select('#brake-chart svg g'),
+            yValue: d => d.brake,
+            yLabel: '%',
+            yFormat: d => d.toFixed(0)
+        },
+        {
+            container: d3.select('#gear-chart'),
+            allData: GearChart.prepareData(),
+            scales: GearChart.createScales(GearChart.prepareData(), d3.select('#gear-chart').node().getBoundingClientRect().width - 170, d3.select('#gear-chart').node().getBoundingClientRect().height - 90),
+            g: d3.select('#gear-chart svg g'),
+            yValue: d => d.n_gear,
+            yLabel: 'Gear',
+            yFormat: d => d
+        }
+    ];
+
+    Tooltip.initialize(charts);
 }
 
 function updateDriverInfo() {
