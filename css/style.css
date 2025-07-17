@@ -377,3 +377,39 @@ select option {
 .main-container.sidebar-hidden .toggle-sidebar-button {
     left: 0;
 }
+
+.driver-info-container {
+    margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.driver-info {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #2c2c2c;
+    padding: 0.5rem;
+    border-radius: 4px;
+}
+
+.driver-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.driver-name {
+    font-weight: bold;
+    color: #eee;
+}
+
+.lap-time {
+    font-size: 0.9rem;
+    color: #ccc;
+}
+
+.tyre-image {
+    width: 40px;
+    height: 40px;
+}

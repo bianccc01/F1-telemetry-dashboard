@@ -623,6 +623,60 @@ function updateCharts() {
     // Aggiorna i grafici con i dati telemetria caricati
     SpeedChart.create(state.telemetryData);
     TrackMap.create(state.telemetryData);
+    updateDriverInfo();
+}
+
+function updateDriverInfo() {
+    const container = document.getElementById('driver-info-container');
+    container.innerHTML = ''; // Clear previous info
+
+    const drivers = Object.values(state.telemetryData);
+
+    if (drivers.length === 0) {
+        container.innerHTML = '<p>No data loaded.</p>';
+        return;
+    }
+
+    drivers.forEach(driverData => {
+        const driver = driverData.driver;
+        const lapNumber = state.selectedLaps[driver.driver_number];
+        const lapInfo = state.lapsByDriver[driver.driver_number]?.find(l => l.lap_number == lapNumber);
+
+        if (!lapInfo) return;
+
+        let lapDuration = lapInfo.lap_duration;
+        if (lapDuration === null) {
+            lapDuration = 'N/A';
+        } else if (typeof lapDuration === 'number') {
+            const minutes = Math.floor(lapDuration / 60);
+            const seconds = (lapDuration % 60).toFixed(3);
+            lapDuration = `${minutes}:${seconds.padStart(6, '0')}`;
+        }
+
+        const infoElement = document.createElement('div');
+        infoElement.classList.add('driver-info');
+        infoElement.style.borderLeft = `5px solid ${driver.color}`;
+
+        const tyreImages = {
+            'soft': 'https://upload.wikimedia.org/wikipedia/commons/d/df/F1_tire_Pirelli_PZero_Red.svg',
+            'medium': 'https://upload.wikimedia.org/wikipedia/commons/4/4d/F1_tire_Pirelli_PZero_Yellow.svg',
+            'hard': 'https://upload.wikimedia.org/wikipedia/commons/d/d6/F1_tire_Pirelli_PZero_White.svg',
+            'intermediate': 'https://upload.wikimedia.org/wikipedia/commons/8/86/F1_tire_Pirelli_Cinturato_Green.svg',
+            'wet': 'https://upload.wikimedia.org/wikipedia/commons/6/63/F1_tire_Pirelli_Cinturato_Blue.svg'
+        };
+
+        infoElement.innerHTML = `
+            <div class="driver-details">
+                <span class="driver-name">${driver.name_acronym}</span>
+                <span class="lap-time">${lapDuration}</span>
+            </div>
+            <div class="tyre-info">
+                <img src="${tyreImages[lapInfo.compound.toLowerCase()]}" alt="${lapInfo.compound}" class="tyre-image">
+            </div>
+        `;
+
+        container.appendChild(infoElement);
+    });
 }
 
 function clearCharts() {
