@@ -712,10 +712,13 @@ function updateCharts() {
         const g = container.select('svg g');
 
         return {
+            id: config.id,
             container,
             allData,
             scales,
             g,
+            width,
+            height,
             yValue: config.yValue,
             yLabel: config.yLabel,
             yFormat: config.yFormat

@@ -58,6 +58,29 @@ window.SpeedChart = {
 
         // Tooltip
         // this.createTooltip(g, allData, scales, width, height);
+
+        // Subscribe to zoom updates
+        ZoomManager.subscribe((transform) => {
+            const newXScale = transform.rescaleX(scales.xScale);
+            g.select('.x-axis').call(d3.axisBottom(newXScale).tickFormat(d => d3.format('.0f')(d) + ' m'));
+
+            const lineGenerator = d3.line()
+                .x(d => newXScale(d.distance))
+                .y(d => scales.yScale(d.speed))
+                .curve(d3.curveMonotoneX);
+
+            g.selectAll('.line').attr('d', lineGenerator);
+        });
+
+        const zoom = d3.zoom()
+            .scaleExtent([1, 10])
+            .translateExtent([[0, 0], [width, height]])
+            .extent([[0, 0], [width, height]])
+            .on('zoom', (event) => {
+                ZoomManager.setTransform(event.transform);
+            });
+
+        svg.call(zoom);
     },
 
     prepareData() {
@@ -150,6 +173,7 @@ window.SpeedChart = {
             .tickFormat(d => d3.format('.0f')(d) + ' m') // Formattazione distanza
 
         g.append('g')
+            .attr('class', 'x-axis')
             .attr('transform', `translate(0,${height})`)
             .call(xAxis);
 
@@ -185,6 +209,7 @@ window.SpeedChart = {
         allData.forEach(driverData => {
             g.append('path')
                 .datum(driverData.data)
+                .attr('class', 'line')
                 .attr('fill', 'none')
                 .attr('stroke', driverData.color)
                 .attr('stroke-width', 2)
