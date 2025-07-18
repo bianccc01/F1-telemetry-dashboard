@@ -82,6 +82,11 @@
 
     <!-- Area principale per i grafici -->
     <section class="charts-container">
+        <div id="violin-plot-container" class="chart-wrapper" style="display: none;">
+            <h3>Lap Time Distribution</h3>
+            <div id="violin-plot-chart" class="chart"></div>
+        </div>
+
         <div class="chart-wrapper">
             <h3>Speed (km/h)</h3>
             <div id="speed-chart" class="chart"></div>
@@ -126,6 +131,7 @@
 <script src="js/charts/tooltip.js"></script>
 <script src="js/main.js"></script>
 <script src="js/telemetry.js"></script>
+<script src="js/charts/violinPlot.js"></script>
 <script src="js/charts/speedChart.js"></script>
 <script src="js/charts/trackMap.js"></script>
 <script src="js/charts/throttleChart.js"></script>

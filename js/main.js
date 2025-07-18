@@ -625,6 +625,17 @@ async function loadTelemetryForLap(lap) {
 }
 
 function updateCharts() {
+    const violinPlotContainer = document.getElementById('violin-plot-container');
+    const singleGPSelected = state.selectedGP;
+    const noLapSelected = Object.values(state.selectedLaps).every(lap => !lap);
+
+    if (singleGPSelected && noLapSelected) {
+        violinPlotContainer.style.display = 'block';
+        ViolinPlot.create();
+    } else {
+        violinPlotContainer.style.display = 'none';
+    }
+
     SpeedChart.create(state.telemetryData);
     ThrottleChart.create(state.telemetryData);
     BrakeChart.create(state.telemetryData);
