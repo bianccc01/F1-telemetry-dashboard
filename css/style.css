@@ -413,3 +413,36 @@ select option {
     width: 40px;
     height: 40px;
 }
+
+/* Weather container */
+.weather-container {
+    margin-top: 1rem;
+    padding: 1rem;
+    background-color: #2c2c2c;
+    border-radius: 4px;
+}
+
+.weather-container h3 {
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    font-weight: 500;
+}
+
+.weather-info {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.weather-info div {
+    display: flex;
+    flex-direction: column;
+}
+
+.weather-info .label {
+    font-weight: bold;
+    color: #eee;
+}
