@@ -10,7 +10,7 @@ const state = {
     selectedSession: null,
 
     availableDrivers: [],
-    selectedDrivers: [null, null, null, null], // 4 driver slots
+    selectedDrivers: [null, null, null], // 3 driver slots
 
     telemetryData: {}, // Now stores telemetry data keyed by driver number
     lapsByDriver: {},   // Stores available laps for each driver
@@ -99,7 +99,7 @@ function initializeEmptySelectors() {
     document.getElementById('gp-selector').innerHTML = '<select id="gp-select" disabled><option>Select year first...</option></select>';
     document.getElementById('session-selector').innerHTML = '<select id="session-select" disabled><option>Select GP first...</option></select>';
 
-    for (let i = 1; i <= 4; i++) {
+    for (let i = 1; i <= 3; i++) {
         const container = document.getElementById(`driver-${i}-container`);
         container.innerHTML = `
             <div class="driver-color-indicator" style="background-color: ${state.slotColors[i - 1]}"></div>
@@ -125,7 +125,7 @@ function setupEventListeners() {
     document.getElementById('gp-selector').addEventListener('change', handleGPChange);
     document.getElementById('session-selector').addEventListener('change', handleSessionChange);
 
-    for (let i = 1; i <= 4; i++) {
+    for (let i = 1; i <= 3; i++) {
         document.getElementById(`driver-${i}-container`).addEventListener('change', (e) => {
             if (e.target.classList.contains('driver-select')) {
                 handleDriverChange(i - 1, e.target.value);
@@ -153,7 +153,7 @@ async function handleYearChange(event) {
 
     state.selectedGP = null;
     state.selectedSession = null;
-    state.selectedDrivers = [null, null, null, null];
+    state.selectedDrivers = [null, null, null];
 
     showLoading();
 
@@ -207,7 +207,7 @@ async function handleGPChange(event) {
 
     state.selectedGP = { location, country };
     state.selectedSession = null;
-    state.selectedDrivers = [null, null, null, null];
+    state.selectedDrivers = [null, null, null];
 
     showLoading();
 
@@ -293,7 +293,7 @@ async function loadTrackData(sessionKey) {
 
 // Populate driver selectors
 function populateDriverSelectors() {
-    for (let i = 1; i <= 4; i++) {
+    for (let i = 1; i <= 3; i++) {
         const select = document.getElementById(`driver-select-${i}`);
         select.innerHTML = '';
 
@@ -348,7 +348,7 @@ async function handleDriverChange(slotIndex, driverNumber) {
         }
         state.selectedDrivers[slotIndex] = null;
         // Also clear subsequent drivers
-        for (let i = slotIndex + 1; i < 4; i++) {
+        for (let i = slotIndex + 1; i < 3; i++) {
             const subsequentDriver = state.selectedDrivers[i];
             if (subsequentDriver) {
                 delete state.lapsByDriver[subsequentDriver.driver_number];
@@ -379,7 +379,7 @@ function resetSessionSelector() {
 }
 
 function resetDriverSelectors() {
-    for (let i = 1; i <= 4; i++) {
+    for (let i = 1; i <= 3; i++) {
         const select = document.getElementById(`driver-select-${i}`);
         select.disabled = true;
         select.innerHTML = '<option>Select session first...</option>';
