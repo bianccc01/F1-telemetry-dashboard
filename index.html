@@ -82,29 +82,33 @@
 
     <!-- Area principale per i grafici -->
     <section class="charts-container">
-        <div id="violin-plot-container" class="chart-wrapper" style="display: none;">
-            <h3>Lap Time Distribution</h3>
-            <div id="violin-plot-chart" class="chart"></div>
+        <div id="race-wide-charts">
+            <div id="violin-plot-container" class="chart-wrapper" style="display: none;">
+                <h3>Lap Time Distribution</h3>
+                <div id="violin-plot-chart" class="chart"></div>
+            </div>
         </div>
 
-        <div class="chart-wrapper">
-            <h3>Speed (km/h)</h3>
-            <div id="speed-chart" class="chart"></div>
-        </div>
+        <div id="individual-lap-charts">
+            <div class="chart-wrapper">
+                <h3>Speed (km/h)</h3>
+                <div id="speed-chart" class="chart"></div>
+            </div>
 
-        <div class="chart-wrapper">
-            <h3>Throttle (%)</h3>
-            <div id="throttle-chart" class="chart"></div>
-        </div>
+            <div class="chart-wrapper">
+                <h3>Throttle (%)</h3>
+                <div id="throttle-chart" class="chart"></div>
+            </div>
 
-        <div class="chart-wrapper">
-            <h3>Brake (%)</h3>
-            <div id="brake-chart" class="chart"></div>
-        </div>
+            <div class="chart-wrapper">
+                <h3>Brake (%)</h3>
+                <div id="brake-chart" class="chart"></div>
+            </div>
 
-        <div class="chart-wrapper">
-            <h3>Gear</h3>
-            <div id="gear-chart" class="chart"></div>
+            <div class="chart-wrapper">
+                <h3>Gear</h3>
+                <div id="gear-chart" class="chart"></div>
+            </div>
         </div>
     </section>
 </main>

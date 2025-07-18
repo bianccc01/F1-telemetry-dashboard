@@ -625,14 +625,23 @@ async function loadTelemetryForLap(lap) {
 }
 
 function updateCharts() {
+    const raceWideCharts = document.getElementById('race-wide-charts');
+    const individualLapCharts = document.getElementById('individual-lap-charts');
     const violinPlotContainer = document.getElementById('violin-plot-container');
+
     const singleGPSelected = state.selectedGP;
     const noLapSelected = Object.values(state.selectedLaps).every(lap => !lap);
 
     if (singleGPSelected && noLapSelected) {
+        // Mostra solo i grafici race-wide (es. violin plot)
+        raceWideCharts.style.display = 'block';
+        individualLapCharts.style.display = 'none';
         violinPlotContainer.style.display = 'block';
         ViolinPlot.create();
     } else {
+        // Mostra solo i grafici dei singoli giri
+        raceWideCharts.style.display = 'none';
+        individualLapCharts.style.display = 'block';
         violinPlotContainer.style.display = 'none';
     }
 
