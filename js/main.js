@@ -730,33 +730,19 @@ function updateWeatherInfo(weatherData) {
     const container = document.getElementById('weather-info');
     container.innerHTML = ''; // Clear previous info
 
-    if (!weatherData || weatherData.length === 0) {
+    if (!weatherData) {
         container.innerHTML = '<p>No weather data available.</p>';
         return;
     }
 
-    // Find the weather data point closest to the start of the lap
-    const firstDriver = Object.values(state.telemetryData)[0];
-    if (!firstDriver || !firstDriver.data || !firstDriver.data.data || firstDriver.data.data.length === 0) {
-        container.innerHTML = '<p>Load driver data to see weather.</p>';
-        return;
-    }
-
-    const lapStart = new Date(firstDriver.data.data[0].date);
-    const weatherPoint = weatherData.reduce((prev, curr) => {
-        const prevDiff = Math.abs(new Date(prev.date) - lapStart);
-        const currDiff = Math.abs(new Date(curr.date) - lapStart);
-        return (currDiff < prevDiff) ? curr : prev;
-    });
-
-
     const weatherItems = {
-        'Air Temp': `${weatherPoint.air_temperature}°C`,
-        'Track Temp': `${weatherPoint.track_temperature}°C`,
-        'Humidity': `${weatherPoint.humidity}%`,
-        'Pressure': `${weatherPoint.pressure} hPa`,
-        'Wind Speed': `${weatherPoint.wind_speed} km/h`,
-        'Rainfall': `${weatherPoint.rainfall ? 'Yes' : 'No'}`
+        'Air Temperature': `${weatherData.air_temperature}°C`,
+        'Track Temperature': `${weatherData.track_temperature}°C`,
+        'Humidity': `${weatherData.humidity}%`,
+        'Pressure': `${weatherData.pressure} mbar`,
+        'Wind Speed': `${weatherData.wind_speed} m/s`,
+        'Wind Direction': `${weatherData.wind_direction}°`,
+        'Rainfall': weatherData.rainfall ? 'Yes' : 'No',
     };
 
     for (const [label, value] of Object.entries(weatherItems)) {

@@ -211,24 +211,16 @@ const API = {
         );
     },
 
-    async getWeatherData(session) {
-        if (!session || !session.latitude || !session.longitude) {
-            console.error('Session with location data is required for weather forecast.');
+     async getWeatherData(sessionKey) {
+        if (!sessionKey) {
+            console.error('Session key is required for weather forecast.');
             return null;
         }
 
-        const url = new URL('https://api.open-meteo.com/v1/forecast');
-        url.searchParams.append('latitude', session.latitude);
-        url.searchParams.append('longitude', session.longitude);
-        url.searchParams.append('current_weather', true);
-        url.searchParams.append('hourly', 'temperature_2m,relativehumidity_2m,rain,showers,snowfall,weathercode,pressure_msl,surface_pressure,cloudcover,visibility,windspeed_10m,winddirection_10m');
-
         try {
-            const response = await fetch(url);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return await response.json();
+            // The API returns a list, so we take the first element
+            const weatherData = await this.fetchData('/weather', { session_key: sessionKey });
+            return weatherData && weatherData.length > 0 ? weatherData[0] : null;
         } catch (error) {
             console.error('Failed to fetch weather data:', error);
             return null;
