@@ -753,6 +753,7 @@ function updateWeatherInfo(weatherData) {
 
 function clearCharts() {
     d3.select('#speed-chart').selectAll('*').remove();
-    d3.select('#throttle-brake-chart').selectAll('*').remove();
+    d3.select('#throttle-chart').selectAll('*').remove();
+    d3.select('#brake-chart').selectAll('*').remove();
     d3.select('#gear-chart').selectAll('*').remove();
 }
