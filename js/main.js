@@ -538,7 +538,7 @@ async function loadAllData() {
 
         const [results, weatherData] = await Promise.all([
             Promise.all(dataPromises),
-            API.getWeatherData(state.selectedSession)
+            API.getWeatherData(state.selectedSession.session_key)
         ]);
         console.log("Weather Data:", weatherData);
         console.log("API Results:", results);
@@ -731,17 +731,19 @@ function updateWeatherInfo(weatherData) {
     const container = document.getElementById('weather-info');
     container.innerHTML = ''; // Clear previous info
 
-    if (!weatherData || !weatherData.current_weather) {
+    if (!weatherData) {
         container.innerHTML = '<p>No weather data available.</p>';
         return;
     }
 
-    const currentWeather = weatherData.current_weather;
-
     const weatherItems = {
-        'Temperature': `${currentWeather.temperature}°C`,
-        'Wind Speed': `${currentWeather.windspeed} km/h`,
-        'Wind Direction': `${currentWeather.winddirection}°`,
+        'Air Temperature': `${weatherData.air_temperature}°C`,
+        'Track Temperature': `${weatherData.track_temperature}°C`,
+        'Humidity': `${weatherData.humidity}%`,
+        'Pressure': `${weatherData.pressure} mbar`,
+        'Wind Speed': `${weatherData.wind_speed} m/s`,
+        'Wind Direction': `${weatherData.wind_direction}°`,
+        'Rainfall': weatherData.rainfall ? 'Yes' : 'No',
     };
 
     for (const [label, value] of Object.entries(weatherItems)) {
