@@ -124,6 +124,8 @@ function setupEventListeners() {
     document.getElementById('year-select').addEventListener('change', handleYearChange);
     document.getElementById('gp-selector').addEventListener('change', handleGPChange);
     document.getElementById('session-selector').addEventListener('change', handleSessionChange);
+    document.getElementById('back-to-race-button').addEventListener('click', handleBackToRace);
+
 
     for (let i = 1; i <= 3; i++) {
         document.getElementById(`driver-${i}-container`).addEventListener('change', (e) => {
@@ -472,6 +474,17 @@ function handleLapChange(event) {
     updateLoadButtonState();
 }
 
+function handleBackToRace() {
+    // Deseleziona tutti i giri
+    state.selectedLaps = {};
+
+    // Resetta i selettori dei giri
+    updateLapSelectors();
+
+    // Aggiorna i grafici per mostrare la visualizzazione race-wide
+    updateCharts();
+}
+
 function updateLoadButtonState() {
     const button = document.getElementById('load-data-button');
     const allLapsSelected = state.selectedDrivers.every(driver => {
@@ -628,6 +641,7 @@ function updateCharts() {
     const raceWideCharts = document.getElementById('race-wide-charts');
     const individualLapCharts = document.getElementById('individual-lap-charts');
     const violinPlotContainer = document.getElementById('violin-plot-container');
+    const backToRaceButton = document.getElementById('back-to-race-button');
 
     const singleGPSelected = state.selectedGP;
     const noLapSelected = Object.values(state.selectedLaps).every(lap => !lap);
@@ -637,12 +651,14 @@ function updateCharts() {
         raceWideCharts.style.display = 'block';
         individualLapCharts.style.display = 'none';
         violinPlotContainer.style.display = 'block';
+        backToRaceButton.style.display = 'none';
         ViolinPlot.create();
     } else {
         // Mostra solo i grafici dei singoli giri
         raceWideCharts.style.display = 'none';
         individualLapCharts.style.display = 'block';
         violinPlotContainer.style.display = 'none';
+        backToRaceButton.style.display = 'block';
     }
 
     SpeedChart.create(state.telemetryData);

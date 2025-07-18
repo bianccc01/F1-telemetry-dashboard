@@ -134,6 +134,21 @@ body {
 }
 
 /* Loading overlay */
+.back-button {
+    margin-bottom: 1rem;
+    padding: 0.5rem 1rem;
+    background-color: #333;
+    color: white;
+    border: 1px solid #555;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.back-button:hover {
+    background-color: #555;
+}
+
 .loading-overlay {
     position: fixed;
     top: 0;
