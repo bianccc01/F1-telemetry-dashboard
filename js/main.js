@@ -536,7 +536,11 @@ async function loadAllData() {
             };
         });
 
-        const results = await Promise.all(dataPromises);
+        const [results, weatherData] = await Promise.all([
+            Promise.all(dataPromises),
+            API.getWeatherData(state.selectedSession.session_key)
+        ]);
+        console.log("Weather Data:", weatherData);
         console.log("API Results:", results);
         results.forEach(result => {
             if (result) { // Check if the result is not null
@@ -544,6 +548,7 @@ async function loadAllData() {
             }
         });
         console.log("State Telemetry Data:", state.telemetryData);
+        updateWeatherInfo(weatherData);
     } catch (error) {
         console.error('Error loading data:', error);
     } finally {
@@ -620,13 +625,53 @@ async function loadTelemetryForLap(lap) {
 }
 
 function updateCharts() {
-    // Aggiorna i grafici con i dati telemetria caricati
     SpeedChart.create(state.telemetryData);
     ThrottleChart.create(state.telemetryData);
     BrakeChart.create(state.telemetryData);
     GearChart.create(state.telemetryData);
     TrackMap.create(state.telemetryData);
     updateDriverInfo();
+
+    const charts = [
+        {
+            container: d3.select('#speed-chart'),
+            allData: SpeedChart.prepareData(),
+            scales: SpeedChart.createScales(SpeedChart.prepareData(), d3.select('#speed-chart').node().getBoundingClientRect().width - 170, d3.select('#speed-chart').node().getBoundingClientRect().height - 90),
+            g: d3.select('#speed-chart svg g'),
+            yValue: d => d.speed,
+            yLabel: 'km/h',
+            yFormat: d => d.toFixed(0)
+        },
+        {
+            container: d3.select('#throttle-chart'),
+            allData: ThrottleChart.prepareData(),
+            scales: ThrottleChart.createScales(ThrottleChart.prepareData(), d3.select('#throttle-chart').node().getBoundingClientRect().width - 170, d3.select('#throttle-chart').node().getBoundingClientRect().height - 90),
+            g: d3.select('#throttle-chart svg g'),
+            yValue: d => d.throttle,
+            yLabel: '%',
+            yFormat: d => d.toFixed(0)
+        },
+        {
+            container: d3.select('#brake-chart'),
+            allData: BrakeChart.prepareData(),
+            scales: BrakeChart.createScales(BrakeChart.prepareData(), d3.select('#brake-chart').node().getBoundingClientRect().width - 170, d3.select('#brake-chart').node().getBoundingClientRect().height - 90),
+            g: d3.select('#brake-chart svg g'),
+            yValue: d => d.brake,
+            yLabel: '%',
+            yFormat: d => d.toFixed(0)
+        },
+        {
+            container: d3.select('#gear-chart'),
+            allData: GearChart.prepareData(),
+            scales: GearChart.createScales(GearChart.prepareData(), d3.select('#gear-chart').node().getBoundingClientRect().width - 170, d3.select('#gear-chart').node().getBoundingClientRect().height - 90),
+            g: d3.select('#gear-chart svg g'),
+            yValue: d => d.n_gear,
+            yLabel: 'Gear',
+            yFormat: d => d
+        }
+    ];
+
+    Tooltip.initialize(charts);
 }
 
 function updateDriverInfo() {
@@ -680,6 +725,46 @@ function updateDriverInfo() {
 
         container.appendChild(infoElement);
     });
+}
+
+function updateWeatherInfo(weatherData) {
+    const container = document.getElementById('weather-info');
+    container.innerHTML = ''; // Clear previous info
+
+    if (!weatherData || weatherData.length === 0) {
+        container.innerHTML = '<p>No weather data available.</p>';
+        return;
+    }
+
+    // Find the weather data point closest to the start of the lap
+    const firstDriver = Object.values(state.telemetryData)[0];
+    if (!firstDriver) {
+        container.innerHTML = '<p>Load driver data to see weather.</p>';
+        return;
+    }
+
+    const lapStart = new Date(firstDriver.data.data[0].date);
+    const weatherPoint = weatherData.reduce((prev, curr) => {
+        const prevDiff = Math.abs(new Date(prev.date) - lapStart);
+        const currDiff = Math.abs(new Date(curr.date) - lapStart);
+        return (currDiff < prevDiff) ? curr : prev;
+    });
+
+
+    const weatherItems = {
+        'Air Temp': `${weatherPoint.air_temperature}°C`,
+        'Track Temp': `${weatherPoint.track_temperature}°C`,
+        'Humidity': `${weatherPoint.humidity}%`,
+        'Pressure': `${weatherPoint.pressure} hPa`,
+        'Wind Speed': `${weatherPoint.wind_speed} km/h`,
+        'Rainfall': `${weatherPoint.rainfall ? 'Yes' : 'No'}`
+    };
+
+    for (const [label, value] of Object.entries(weatherItems)) {
+        const item = document.createElement('div');
+        item.innerHTML = `<span class="label">${label}:</span> <span class="value">${value}</span>`;
+        container.appendChild(item);
+    }
 }
 
 function clearCharts() {

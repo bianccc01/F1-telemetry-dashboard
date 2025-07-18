@@ -211,6 +211,12 @@ const API = {
         );
     },
 
+    async getWeatherData(sessionKey) {
+        return await this.fetchData('/weather', {
+            session_key: sessionKey
+        });
+    },
+
     async getIntervals(sessionKey, driverNumber, lapNumber) {
         return await this.fetchData('/intervals', {
             session_key: sessionKey,
