@@ -622,6 +622,9 @@ async function loadTelemetryForLap(lap) {
 function updateCharts() {
     // Aggiorna i grafici con i dati telemetria caricati
     SpeedChart.create(state.telemetryData);
+    ThrottleChart.create(state.telemetryData);
+    BrakeChart.create(state.telemetryData);
+    GearChart.create(state.telemetryData);
     TrackMap.create(state.telemetryData);
     updateDriverInfo();
 }
@@ -681,6 +684,7 @@ function updateDriverInfo() {
 
 function clearCharts() {
     d3.select('#speed-chart').selectAll('*').remove();
-    d3.select('#throttle-brake-chart').selectAll('*').remove();
+    d3.select('#throttle-chart').selectAll('*').remove();
+    d3.select('#brake-chart').selectAll('*').remove();
     d3.select('#gear-chart').selectAll('*').remove();
 }
