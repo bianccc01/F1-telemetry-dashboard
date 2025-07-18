@@ -538,7 +538,7 @@ async function loadAllData() {
 
         const [results, weatherData] = await Promise.all([
             Promise.all(dataPromises),
-            API.getWeatherData(state.selectedSession)
+            API.getWeatherData(state.selectedSession.session_key)
         ]);
         console.log("Weather Data:", weatherData);
         console.log("API Results:", results);
@@ -671,7 +671,6 @@ function updateCharts() {
         }
     ];
 
-    Tooltip.initialize(charts);
 }
 
 function updateDriverInfo() {
@@ -731,17 +730,33 @@ function updateWeatherInfo(weatherData) {
     const container = document.getElementById('weather-info');
     container.innerHTML = ''; // Clear previous info
 
-    if (!weatherData || !weatherData.current_weather) {
+    if (!weatherData || weatherData.length === 0) {
         container.innerHTML = '<p>No weather data available.</p>';
         return;
     }
 
-    const currentWeather = weatherData.current_weather;
+    // Find the weather data point closest to the start of the lap
+    const firstDriver = Object.values(state.telemetryData)[0];
+    if (!firstDriver || !firstDriver.data || !firstDriver.data.data || firstDriver.data.data.length === 0) {
+        container.innerHTML = '<p>Load driver data to see weather.</p>';
+        return;
+    }
+
+    const lapStart = new Date(firstDriver.data.data[0].date);
+    const weatherPoint = weatherData.reduce((prev, curr) => {
+        const prevDiff = Math.abs(new Date(prev.date) - lapStart);
+        const currDiff = Math.abs(new Date(curr.date) - lapStart);
+        return (currDiff < prevDiff) ? curr : prev;
+    });
+
 
     const weatherItems = {
-        'Temperature': `${currentWeather.temperature}°C`,
-        'Wind Speed': `${currentWeather.windspeed} km/h`,
-        'Wind Direction': `${currentWeather.winddirection}°`,
+        'Air Temp': `${weatherPoint.air_temperature}°C`,
+        'Track Temp': `${weatherPoint.track_temperature}°C`,
+        'Humidity': `${weatherPoint.humidity}%`,
+        'Pressure': `${weatherPoint.pressure} hPa`,
+        'Wind Speed': `${weatherPoint.wind_speed} km/h`,
+        'Rainfall': `${weatherPoint.rainfall ? 'Yes' : 'No'}`
     };
 
     for (const [label, value] of Object.entries(weatherItems)) {

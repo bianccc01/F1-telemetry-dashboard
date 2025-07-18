@@ -55,6 +55,8 @@ window.Tooltip = {
     moveTooltips(event) {
         const x0 = this.charts[0].scales.xScale.invert(d3.pointer(event)[0]);
 
+        let pointForTrackMap = null;
+
         this.charts.forEach(chart => {
             const { container, allData, scales, g, yValue, yLabel, yFormat } = chart;
             if (!container || !allData || !scales || !g) return;
@@ -66,6 +68,11 @@ window.Tooltip = {
                 const d1 = driver.data[i];
                 if (!d0 || !d1) return;
                 const d = x0 - d0.distance > d1.distance - x0 ? d1 : d0;
+
+                if (!pointForTrackMap) {
+                    pointForTrackMap = d;
+                }
+
                 tooltipData.push({
                     driverName: driver.driverName,
                     value: yValue(d),
@@ -94,5 +101,9 @@ window.Tooltip = {
                     .style('top', (event.pageY - 28) + 'px');
             }
         });
+
+        if (pointForTrackMap) {
+            TrackMap.updateCarPosition(pointForTrackMap);
+        }
     }
 };

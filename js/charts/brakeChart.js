@@ -269,6 +269,16 @@ window.BrakeChart = {
                         `).join(''))
                         .style('left', (event.pageX + 15) + 'px')
                         .style('top', (event.pageY - 28) + 'px');
+
+                    if (tooltipData[0]) {
+                        const i = bisectDistance(allData[0].data, scales.xScale.invert(tooltipData[0].x), 1);
+                        const d0 = allData[0].data[i - 1];
+                        const d1 = allData[0].data[i];
+                        if (d0 && d1) {
+                            const d = scales.xScale.invert(tooltipData[0].x) - d0.distance > d1.distance - scales.xScale.invert(tooltipData[0].x) ? d1 : d0;
+                            TrackMap.updateCarPosition(d);
+                        }
+                    }
                 }
             });
     }
