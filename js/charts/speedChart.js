@@ -59,28 +59,42 @@ window.SpeedChart = {
         // Tooltip
         // this.createTooltip(g, allData, scales, width, height);
 
-        // Subscribe to zoom updates
-        ZoomManager.subscribe((transform) => {
-            const newXScale = transform.rescaleX(scales.xScale);
-            g.select('.x-axis').call(d3.axisBottom(newXScale).tickFormat(d => d3.format('.0f')(d) + ' m'));
-
-            const lineGenerator = d3.line()
-                .x(d => newXScale(d.distance))
-                .y(d => scales.yScale(d.speed))
-                .curve(d3.curveMonotoneX);
-
-            g.selectAll('.line').attr('d', lineGenerator);
-        });
-
         const zoom = d3.zoom()
             .scaleExtent([1, 10])
             .translateExtent([[0, 0], [width, height]])
             .extent([[0, 0], [width, height]])
             .on('zoom', (event) => {
-                ZoomManager.setTransform(event.transform);
+                const transform = event.transform;
+                const newXScale = transform.rescaleX(scales.xScale);
+
+                g.select('.x-axis').call(d3.axisBottom(newXScale).tickFormat(d => d3.format('.0f')(d) + ' m'));
+
+                const lineGenerator = d3.line()
+                    .x(d => newXScale(d.distance))
+                    .y(d => scales.yScale(d.speed))
+                    .curve(d3.curveMonotoneX);
+
+                g.selectAll('.line').attr('d', lineGenerator);
+
+                if (Tooltip.moveTooltips) {
+                    Tooltip.moveTooltips(event, transform);
+                }
             });
 
         svg.call(zoom);
+
+        g.append('rect')
+            .attr('class', 'overlay')
+            .attr('width', width)
+            .attr('height', height)
+            .style('fill', 'none')
+            .style('pointer-events', 'all')
+            .on('mouseover', () => Tooltip.showTooltips())
+            .on('mouseout', () => Tooltip.hideTooltips())
+            .on('mousemove', (event) => {
+                const transform = d3.zoomTransform(svg.node());
+                Tooltip.moveTooltips(event, transform.k !== 1 ? transform : null);
+            });
     },
 
     prepareData() {

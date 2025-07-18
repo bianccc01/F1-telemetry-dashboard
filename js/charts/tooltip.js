@@ -25,7 +25,6 @@ window.Tooltip = {
         // Rimuovi tooltip esistenti per questo grafico
         d3.select(`body > .tooltip.tooltip-${chartId}`).remove();
         g.selectAll('.tooltip-line').remove();
-        g.selectAll('.tooltip-circle').remove();
 
         // Aggiungi tooltip al body per evitare clipping
         d3.select('body').append('div')
@@ -55,23 +54,23 @@ window.Tooltip = {
     showTooltips() {
         d3.selectAll('.tooltip').style('opacity', 1);
         d3.selectAll('.tooltip-line').style('opacity', 1);
-        d3.selectAll('.tooltip-circle').style('opacity', 1);
     },
 
     hideTooltips() {
         d3.selectAll('.tooltip').style('opacity', 0);
         d3.selectAll('.tooltip-line').style('opacity', 0);
-        d3.selectAll('.tooltip-circle').style('opacity', 0);
     },
 
-    moveTooltips(event) {
-        // Determinare la posizione x del mouse su uno dei grafici (il primo)
+    moveTooltips(event, transform) {
         const pointer = d3.pointer(event);
-        const x0 = this.charts[0].scales.xScale.invert(pointer[0]);
+        const mainChart = this.charts[0];
+        if (!mainChart || !mainChart.scales) return;
+
+        const currentXScale = transform ? transform.rescaleX(mainChart.scales.xScale) : mainChart.scales.xScale;
+        const x0 = currentXScale.invert(pointer[0]);
 
         let pointForTrackMap = null;
 
-        // Itera su ogni grafico per aggiornare la sua linea di tooltip e i cerchi
         this.charts.forEach(chart => {
             const { container, allData, scales, g, yValue, yLabel, yFormat } = chart;
             if (!container || !allData || !scales || !g || allData.length === 0) return;
@@ -80,7 +79,8 @@ window.Tooltip = {
             const tooltip = d3.select(`body > .tooltip.tooltip-${chartId}`);
             let tooltipData = [];
 
-            // Trova i dati per ogni pilota nel punto x0
+            const effectiveXScale = transform ? transform.rescaleX(scales.xScale) : scales.xScale;
+
             allData.forEach(driver => {
                 const i = this.bisectDistance(driver.data, x0, 1);
                 const d0 = driver.data[i - 1];
@@ -94,42 +94,25 @@ window.Tooltip = {
                     driverName: driver.driverName,
                     value: yValue(d),
                     color: driver.color,
-                    x: scales.xScale(d.distance),
+                    x: effectiveXScale(d.distance),
                     y: scales.yScale(yValue(d)),
                 });
             });
 
             if (tooltipData.length > 0) {
-                // Aggiorna linea verticale
                 g.select('.tooltip-line')
-                    .attr('x1', tooltipData[0].x)
-                    .attr('x2', tooltipData[0].x)
+                    .attr('x1', effectiveXScale(x0))
+                    .attr('x2', effectiveXScale(x0))
                     .attr('y1', 0)
                     .attr('y2', scales.yScale.range()[0]);
 
-                // Aggiorna cerchi
-                const circles = g.selectAll('.tooltip-circle').data(tooltipData);
-                circles.enter().append('circle')
-                    .attr('class', 'tooltip-circle')
-                    .attr('r', 5)
-                    .style('opacity', 0) // Inizia invisibile
-                    .merge(circles)
-                    .attr('fill', d => d.color)
-                    .attr('cx', d => d.x)
-                    .attr('cy', d => d.y)
-                    .style('opacity', 1); // Rendi visibile
-
-                circles.exit().remove();
-
-                // Aggiorna contenuto e posizione del tooltip
                 tooltip.html(tooltipData.map(d => `<div style="color: ${d.color}">${d.driverName}: ${yFormat(d.value)} ${yLabel}</div>`).join(''))
                     .style('opacity', 1)
-                    .style('left', (g.node().getBoundingClientRect().left + tooltipData[0].x + 15) + 'px')
-                    .style('top', (g.node().getBoundingClientRect().top + tooltipData[0].y) + 'px');
+                    .style('left', (g.node().getBoundingClientRect().left + effectiveXScale(x0) + 15) + 'px')
+                    .style('top', (g.node().getBoundingClientRect().top + scales.yScale(tooltipData[0].value)) + 'px');
             }
         });
 
-        // Aggiorna la posizione sulla mappa
         if (pointForTrackMap) {
             TrackMap.updateCarPosition(pointForTrackMap);
         }
