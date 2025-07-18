@@ -632,45 +632,63 @@ function updateCharts() {
     TrackMap.create(state.telemetryData);
     updateDriverInfo();
 
-    const charts = [
+    const chartConfigs = [
         {
-            container: d3.select('#speed-chart'),
-            allData: SpeedChart.prepareData(),
-            scales: SpeedChart.createScales(SpeedChart.prepareData(), d3.select('#speed-chart').node().getBoundingClientRect().width - 170, d3.select('#speed-chart').node().getBoundingClientRect().height - 90),
-            g: d3.select('#speed-chart svg g'),
+            id: 'speed-chart',
+            prepareData: SpeedChart.prepareData,
+            createScales: SpeedChart.createScales,
             yValue: d => d.speed,
             yLabel: 'km/h',
             yFormat: d => d.toFixed(0)
         },
         {
-            container: d3.select('#throttle-chart'),
-            allData: ThrottleChart.prepareData(),
-            scales: ThrottleChart.createScales(ThrottleChart.prepareData(), d3.select('#throttle-chart').node().getBoundingClientRect().width - 170, d3.select('#throttle-chart').node().getBoundingClientRect().height - 90),
-            g: d3.select('#throttle-chart svg g'),
+            id: 'throttle-chart',
+            prepareData: ThrottleChart.prepareData,
+            createScales: ThrottleChart.createScales,
             yValue: d => d.throttle,
             yLabel: '%',
             yFormat: d => d.toFixed(0)
         },
         {
-            container: d3.select('#brake-chart'),
-            allData: BrakeChart.prepareData(),
-            scales: BrakeChart.createScales(BrakeChart.prepareData(), d3.select('#brake-chart').node().getBoundingClientRect().width - 170, d3.select('#brake-chart').node().getBoundingClientRect().height - 90),
-            g: d3.select('#brake-chart svg g'),
+            id: 'brake-chart',
+            prepareData: BrakeChart.prepareData,
+            createScales: BrakeChart.createScales,
             yValue: d => d.brake,
             yLabel: '%',
             yFormat: d => d.toFixed(0)
         },
         {
-            container: d3.select('#gear-chart'),
-            allData: GearChart.prepareData(),
-            scales: GearChart.createScales(GearChart.prepareData(), d3.select('#gear-chart').node().getBoundingClientRect().width - 170, d3.select('#gear-chart').node().getBoundingClientRect().height - 90),
-            g: d3.select('#gear-chart svg g'),
+            id: 'gear-chart',
+            prepareData: GearChart.prepareData,
+            createScales: GearChart.createScales,
             yValue: d => d.n_gear,
             yLabel: 'Gear',
             yFormat: d => d
         }
     ];
 
+    const charts = chartConfigs.map(config => {
+        const container = d3.select(`#${config.id}`);
+        const allData = config.prepareData();
+        const width = container.node().getBoundingClientRect().width - 170;
+        const height = container.node().getBoundingClientRect().height - 90;
+        const scales = config.createScales(allData, width, height);
+        const g = container.select('svg g');
+
+        return {
+            container,
+            allData,
+            scales,
+            g,
+            yValue: config.yValue,
+            yLabel: config.yLabel,
+            yFormat: config.yFormat
+        };
+    }).filter(c => c.g && !c.g.empty()); // Assicurati che il gruppo g esista
+
+    if (charts.length > 0) {
+        Tooltip.initialize(charts);
+    }
 }
 
 function updateDriverInfo() {

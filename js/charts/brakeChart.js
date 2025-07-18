@@ -25,7 +25,7 @@ window.BrakeChart = {
             .attr('transform', `translate(${margin.left},${margin.top})`);
 
         // Prepara i dati
-        const allData = this.prepareData();
+        const allData = BrakeChart.prepareData();
 
         if (allData.length === 0) {
             container.append('div')
@@ -35,19 +35,19 @@ window.BrakeChart = {
         }
 
         // Scale
-        const scales = this.createScales(allData, width, height);
+        const scales = BrakeChart.createScales(allData, width, height);
 
         // Assi
-        this.createAxes(g, scales, width, height, margin);
+        BrakeChart.createAxes(g, scales, width, height, margin);
 
         // Linee
-        this.createLines(g, allData, scales);
+        BrakeChart.createLines(g, allData, scales);
 
         // Legenda
-        this.createLegend(g, allData, width);
+        BrakeChart.createLegend(g, allData, width);
 
-        // Tooltip
-        this.createTooltip(g, allData, scales, width, height);
+        // Tooltip (se attivato in futuro)
+        // BrakeChart.createTooltip(g, allData, scales, width, height);
     },
 
     prepareData() {
@@ -65,7 +65,7 @@ window.BrakeChart = {
                 .sort((a, b) => new Date(a.date) - new Date(b.date));
 
             if (validData.length > 0) {
-                const dataWithDistance = this.calculateDistance(validData);
+                const dataWithDistance = BrakeChart.calculateDistance(validData);
 
                 allData.push({
                     driverNumber,
@@ -188,98 +188,4 @@ window.BrakeChart = {
                 .text(driverData.driverName);
         });
     },
-
-    createTooltip(g, allData, scales, width, height) {
-        const tooltip = d3.select('#brake-chart').append('div')
-            .attr('class', 'tooltip')
-            .style('opacity', 0);
-
-        const tooltipLine = g.append('line')
-            .attr('class', 'tooltip-line')
-            .attr('stroke', '#fff')
-            .attr('stroke-width', 1)
-            .attr('stroke-dasharray', '3,3')
-            .style('opacity', 0);
-
-        const tooltipCircles = g.selectAll('.tooltip-circle')
-            .data(allData)
-            .enter().append('circle')
-            .attr('class', 'tooltip-circle')
-            .attr('r', 5)
-            .attr('fill', d => d.color)
-            .style('opacity', 0);
-
-        const bisectDistance = d3.bisector(d => d.distance).left;
-
-        const overlay = g.append('rect')
-            .attr('class', 'overlay')
-            .attr('width', width)
-            .attr('height', height)
-            .style('fill', 'none')
-            .style('pointer-events', 'all')
-            .on('mouseover', () => {
-                tooltip.style('opacity', 1);
-                tooltipLine.style('opacity', 1);
-                tooltipCircles.style('opacity', 1);
-            })
-            .on('mouseout', () => {
-                tooltip.style('opacity', 0);
-                tooltipLine.style('opacity', 0);
-                tooltipCircles.style('opacity', 0);
-            })
-            .on('mousemove', (event) => {
-                const [x, y] = d3.pointer(event, g.node());
-                const x0 = scales.xScale.invert(x);
-
-                let tooltipData = [];
-
-                allData.forEach(driver => {
-                    const i = bisectDistance(driver.data, x0, 1);
-                    const d0 = driver.data[i - 1];
-                    const d1 = driver.data[i];
-                    if (!d0 || !d1) return;
-                    const d = x0 - d0.distance > d1.distance - x0 ? d1 : d0;
-
-                    tooltipData.push({
-                        driverName: driver.driverName,
-                        brake: d.brake,
-                        color: driver.color,
-                        x: scales.xScale(d.distance),
-                        y: scales.yScale(d.brake)
-                    });
-                });
-
-                if(tooltipData.length > 0){
-                    tooltipLine
-                        .attr('x1', tooltipData[0].x)
-                        .attr('x2', tooltipData[0].x)
-                        .attr('y1', 0)
-                        .attr('y2', height);
-
-                    tooltipCircles
-                        .data(tooltipData)
-                        .attr('cx', d => d.x)
-                        .attr('cy', d => d.y);
-
-                    tooltip
-                        .html(tooltipData.map(d => `
-                            <div style="color: ${d.color}">
-                                ${d.driverName}: ${d.brake.toFixed(0)}%
-                            </div>
-                        `).join(''))
-                        .style('left', (event.pageX + 15) + 'px')
-                        .style('top', (event.pageY - 28) + 'px');
-
-                    if (tooltipData[0]) {
-                        const i = bisectDistance(allData[0].data, scales.xScale.invert(tooltipData[0].x), 1);
-                        const d0 = allData[0].data[i - 1];
-                        const d1 = allData[0].data[i];
-                        if (d0 && d1) {
-                            const d = scales.xScale.invert(tooltipData[0].x) - d0.distance > d1.distance - scales.xScale.invert(tooltipData[0].x) ? d1 : d0;
-                            TrackMap.updateCarPosition(d);
-                        }
-                    }
-                }
-            });
-    }
 };

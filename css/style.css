@@ -283,11 +283,13 @@ select option {
 
 .tooltip {
     position: absolute;
-    background-color: rgba(0, 0, 0, 0.8);
-    color: #fff;
-    padding: 8px;
-    border-radius: 4px;
-    font-size: 12px;
+    background-color: rgba(0, 0, 0, 0.5);
+    color: #ddd;
+    padding: 6px;
+    margin-top: -25px;
+    border-radius: 6px;
+    font-size: 11px;
+    line-height: 1.5;
     pointer-events: none;
     transition: opacity 0.2s;
 }

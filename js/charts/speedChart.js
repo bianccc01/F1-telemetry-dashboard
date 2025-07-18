@@ -57,7 +57,7 @@ window.SpeedChart = {
         this.createLegend(g, allData, width);
 
         // Tooltip
-        this.createTooltip(g, allData, scales, width, height);
+        // this.createTooltip(g, allData, scales, width, height);
     },
 
     prepareData() {
@@ -70,14 +70,14 @@ window.SpeedChart = {
             const color = driverData.color;
             const driverName = driverData.driver.name_acronym;
 
-            // Filtra e ordina i dati per tempo
+            // Filter and sort data by time
             const validData = data
                 .filter(d => d.speed != null && d.date != null)
                 .sort((a, b) => new Date(a.date) - new Date(b.date));
 
             if (validData.length > 0) {
-                // 🏁 Calcola la distanza cumulativa dal punto di partenza
-                const dataWithDistance = this.calculateDistance(validData);
+                // Calculate cumulative distance from the starting point
+                const dataWithDistance = SpeedChart.calculateDistance(validData);
 
                 allData.push({
                     driverNumber,
@@ -93,7 +93,7 @@ window.SpeedChart = {
     },
 
 
-    calculateDistance(telemetryData) {
+    calculateDistance: function(telemetryData) {
         const dataWithDistance = [];
         let cumulativeDistance = 0;
 
@@ -215,96 +215,4 @@ window.SpeedChart = {
         });
     },
 
-    createTooltip(g, allData, scales, width, height) {
-        const tooltip = d3.select('#speed-chart').append('div')
-            .attr('class', 'tooltip')
-            .style('opacity', 0);
-
-        const tooltipLine = g.append('line')
-            .attr('class', 'tooltip-line')
-            .attr('stroke', '#fff')
-            .attr('stroke-width', 1)
-            .attr('stroke-dasharray', '3,3')
-            .style('opacity', 0);
-
-        const tooltipCircles = g.selectAll('.tooltip-circle')
-            .data(allData)
-            .enter().append('circle')
-            .attr('class', 'tooltip-circle')
-            .attr('r', 5)
-            .attr('fill', d => d.color)
-            .style('opacity', 0);
-
-        const bisectDistance = d3.bisector(d => d.distance).left;
-
-        const overlay = g.append('rect')
-            .attr('class', 'overlay')
-            .attr('width', width)
-            .attr('height', height)
-            .style('fill', 'none')
-            .style('pointer-events', 'all')
-            .on('mouseover', () => {
-                tooltip.style('opacity', 1);
-                tooltipLine.style('opacity', 1);
-                tooltipCircles.style('opacity', 1);
-            })
-            .on('mouseout', () => {
-                tooltip.style('opacity', 0);
-                tooltipLine.style('opacity', 0);
-                tooltipCircles.style('opacity', 0);
-            })
-            .on('mousemove', (event) => {
-                const [x, y] = d3.pointer(event, g.node());
-                const x0 = scales.xScale.invert(x);
-
-                let tooltipData = [];
-                let pointForTrackMap = null;
-
-                allData.forEach(driver => {
-                    const i = bisectDistance(driver.data, x0, 1);
-                    const d0 = driver.data[i - 1];
-                    const d1 = driver.data[i];
-                    if (!d0 || !d1) return;
-                    const d = x0 - d0.distance > d1.distance - x0 ? d1 : d0;
-
-                    if (!pointForTrackMap) {
-                        pointForTrackMap = d;
-                    }
-
-                    tooltipData.push({
-                        driverName: driver.driverName,
-                        speed: d.speed,
-                        color: driver.color,
-                        x: scales.xScale(d.distance),
-                        y: scales.yScale(d.speed)
-                    });
-                });
-
-                if (tooltipData.length > 0) {
-                    tooltipLine
-                        .attr('x1', tooltipData[0].x)
-                        .attr('x2', tooltipData[0].x)
-                        .attr('y1', 0)
-                        .attr('y2', height);
-
-                    tooltipCircles
-                        .data(tooltipData)
-                        .attr('cx', d => d.x)
-                        .attr('cy', d => d.y);
-
-                    tooltip
-                        .html(tooltipData.map(d => `
-                            <div style="color: ${d.color}">
-                                ${d.driverName}: ${d.speed.toFixed(0)} km/h
-                            </div>
-                        `).join(''))
-                        .style('left', (event.pageX + 15) + 'px')
-                        .style('top', (event.pageY - 28) + 'px');
-                }
-
-                if (pointForTrackMap) {
-                    TrackMap.updateCarPosition(pointForTrackMap);
-                }
-            });
-    }
 };
