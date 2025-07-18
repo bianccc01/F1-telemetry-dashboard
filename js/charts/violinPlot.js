@@ -73,7 +73,7 @@ window.ViolinPlot = {
             .padding(0.05);
 
         const yScale = d3.scaleLinear()
-            .domain(d3.extent(allLapTimes))
+            .domain([60, d3.max(allLapTimes) + 10]) // Start y-axis from 0
             .range([height, 0]);
 
         return { xScale, yScale };
@@ -99,6 +99,10 @@ window.ViolinPlot = {
 
     createViolins(g, allData, scales, height) {
         const { xScale, yScale } = scales;
+        const numDrivers = allData.length;
+
+        // Adjust bandwidth based on the number of drivers
+        const bandwidth = numDrivers === 1 ? xScale.bandwidth() / 2 : xScale.bandwidth();
 
         // Binning data for histogram
         const histogram = d3.histogram()
@@ -112,7 +116,10 @@ window.ViolinPlot = {
 
         allData.forEach(driverData => {
             const gViolin = g.append("g")
-                .attr("transform", `translate(${xScale(driverData.driverName)}, 0)`)
+                .attr("transform", () => {
+                    const x = numDrivers === 1 ? xScale(driverData.driverName) + bandwidth / 2 : xScale(driverData.driverName);
+                    return `translate(${x}, 0)`;
+                })
                 .on("mouseover", function(event) {
                     tooltip.transition().duration(200).style("opacity", .9);
                     tooltip.html(`<strong>${driverData.driverName}</strong><br/>
@@ -128,7 +135,7 @@ window.ViolinPlot = {
             const bins = histogram(driverData.lapTimes);
             const maxNum = d3.max(bins, d => d.length);
             const xNum = d3.scaleLinear()
-                .range([0, xScale.bandwidth()])
+                .range([0, bandwidth])
                 .domain([-maxNum, maxNum]);
 
             const area = d3.area()
@@ -153,31 +160,31 @@ window.ViolinPlot = {
             const interQuantileRange = gViolin.append("g");
 
             interQuantileRange.append("line")
-                .attr("x1", xScale.bandwidth() / 2 - 5)
-                .attr("x2", xScale.bandwidth() / 2 + 5)
+                .attr("x1", bandwidth / 2 - 5)
+                .attr("x2", bandwidth / 2 + 5)
                 .attr("y1", yScale(q1))
                 .attr("y2", yScale(q1))
                 .attr("stroke", "black")
                 .attr("stroke-width", 2);
             
             interQuantileRange.append("line")
-                .attr("x1", xScale.bandwidth() / 2 - 5)
-                .attr("x2", xScale.bandwidth() / 2 + 5)
+                .attr("x1", bandwidth / 2 - 5)
+                .attr("x2", bandwidth / 2 + 5)
                 .attr("y1", yScale(q3))
                 .attr("y2", yScale(q3))
                 .attr("stroke", "black")
                 .attr("stroke-width", 2);
 
             interQuantileRange.append("line")
-                .attr("x1", xScale.bandwidth() / 2)
-                .attr("x2", xScale.bandwidth() / 2)
+                .attr("x1", bandwidth / 2)
+                .attr("x2", bandwidth / 2)
                 .attr("y1", yScale(q1))
                 .attr("y2", yScale(q3))
                 .attr("stroke", "black")
                 .attr("stroke-width", 2);
 
             interQuantileRange.append("circle")
-                .attr("cx", xScale.bandwidth() / 2)
+                .attr("cx", bandwidth / 2)
                 .attr("cy", yScale(median))
                 .attr("r", 5)
                 .attr("fill", "white")
