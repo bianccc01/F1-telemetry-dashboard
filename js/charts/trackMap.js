@@ -50,6 +50,21 @@ const TrackMap = {
             .attr('fill', 'white')
             .attr('id', 'car-dot')
             .style('opacity', 0);
+
+        // Draw starting grid
+        const startingPoint = trackData[0];
+        const nextPoint = trackData[1];
+        const angle = Math.atan2(this.yScale(nextPoint.y) - this.yScale(startingPoint.y), this.xScale(nextPoint.x) - this.xScale(startingPoint.x));
+        const gridLength = 20; // Length of the grid lines
+
+        svg.append('line')
+            .attr('x1', this.xScale(startingPoint.x) - (gridLength / 2) * Math.sin(angle))
+            .attr('y1', this.yScale(startingPoint.y) + (gridLength / 2) * Math.cos(angle))
+            .attr('x2', this.xScale(startingPoint.x) + (gridLength / 2) * Math.sin(angle))
+            .attr('y2', this.yScale(startingPoint.y) - (gridLength / 2) * Math.cos(angle))
+            .attr('stroke', 'white')
+            .attr('stroke-width', 2);
+
     },
 
     updateCarPosition(point) {

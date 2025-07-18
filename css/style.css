@@ -36,8 +36,9 @@ body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     background-color: var(--bg-dark);
     color: var(--text-primary);
+    display: flex;
+    flex-direction: column;
     height: 100vh;
-    overflow: hidden;
 }
 
 /* Header */
@@ -60,7 +61,8 @@ body {
 /* Main container */
 .main-container {
     display: flex;
-    height: calc(100vh - 80px);
+    flex: 1;
+    overflow: hidden;
 }
 
 /* Sidebar */
@@ -322,12 +324,18 @@ select option {
     cursor: not-allowed;
 }
 
-
 .track-map {
     position: relative;
     background: rgba(0, 0, 0, 0.4);
     border-radius: 8px;
     overflow: hidden;
+}
+
+.track-map-container {
+    width: 100%;
+    height: 100%;
+    margin-left: 12px;
+    margin-top: 23px;
 }
 
 .track-map svg {
@@ -430,6 +438,25 @@ select option {
 .driver-name {
     font-weight: bold;
     color: #eee;
+}
+
+/* Footer */
+.footer {
+    background-color: var(--bg-light);
+    padding: 1rem 2rem;
+    border-top: 1px solid var(--border-color);
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.footer a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+.footer a:hover {
+    text-decoration: underline;
 }
 
 .lap-time {

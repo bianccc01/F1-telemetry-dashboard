@@ -156,7 +156,7 @@ window.ThrottleChart = {
     createLegend(g, allData, width) {
         const legend = g.append('g')
             .attr('class', 'legend')
-            .attr('transform', `translate(${width - 80}, 20)`);
+            .attr('transform', `translate(${width - 20}, 20)`);
 
         allData.forEach((driverData, i) => {
             const legendRow = legend.append('g')
