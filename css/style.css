@@ -5,6 +5,24 @@
     box-sizing: border-box;
 }
 
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-dark);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-color);
+}
+
 :root {
     --primary-color: #e10600;
     --bg-dark: #15151e;
@@ -348,19 +366,27 @@ select option {
 /* Toggle Sidebar Button */
 .toggle-sidebar-button {
     position: absolute;
-    left: 300px; /* Same as sidebar width */
-    top: 50%;
+    left: 285px; /* Adjust to not overlap */
+    top: calc(50% + 50px); /* Adjust this value to center the button */
     transform: translateY(-50%);
     z-index: 50;
-    width: 25px;
-    height: 50px;
+    width: 15px;
+    height: 30px;
     background-color: var(--primary-color);
     color: white;
     border: none;
     border-radius: 0 5px 5px 0;
     cursor: pointer;
-    font-size: 16px;
-    transition: left 0.3s ease, background-color 0.2s;
+    font-size: 10px;
+    transition: left 0.3s ease, background-color 0.2s, top 0.3s ease, opacity 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.5;
+}
+
+.toggle-sidebar-button:hover {
+    opacity: 1;
 }
 
 .toggle-sidebar-button:hover {
