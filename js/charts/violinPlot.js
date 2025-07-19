@@ -34,14 +34,6 @@ window.ViolinPlot = {
                 // Create violin plots
                 this.createViolins(g, allData, scales, height);
 
-                // Add title
-                g.append('text')
-                    .attr('x', width / 2)
-                    .attr('y', -20)
-                    .attr('text-anchor', 'middle')
-                    .style('font-size', '16px')
-                    .style('fill', '#fff')
-                    .text('Lap Time Distribution by Driver');
             });
         }
     },
