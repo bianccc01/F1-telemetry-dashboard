@@ -692,7 +692,8 @@ function updateCharts() {
         individualLapCharts.style.display = 'block';
         violinPlotContainer.style.display = 'none';
         backToRaceButton.style.display = 'block';
-        d3.select('.violin-tooltip').remove();
+        d3.selectAll('.tooltip').remove();
+
     }
 
     SpeedChart.create(state.telemetryData);
