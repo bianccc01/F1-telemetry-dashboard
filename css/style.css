@@ -484,6 +484,12 @@ select option {
     height: 40px;
 }
 
+.tyre-image-tooltip {
+    width: 30px;
+    height: 30px;
+    vertical-align: middle;
+}
+
 /* Weather container */
 .weather-container {
     margin-top: 1rem;
