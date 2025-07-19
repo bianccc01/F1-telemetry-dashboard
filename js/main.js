@@ -708,6 +708,8 @@ function updateCharts() {
         ViolinPlot.create();
         if (state.selectedDrivers.some(d => d)) {
             fetchAllLapsForRaceChart();
+        } else {
+            RaceChart.create({});
         }
     } else {
         // Mostra solo i grafici dei singoli giri
@@ -723,7 +725,6 @@ function updateCharts() {
     ThrottleChart.create(state.telemetryData);
     BrakeChart.create(state.telemetryData);
     GearChart.create(state.telemetryData);
-    TrackMap.create(state.telemetryData);
     updateDriverInfo();
 
     const chartConfigs = [
