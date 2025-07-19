@@ -39,6 +39,7 @@ body {
     display: flex;
     flex-direction: column;
     height: 100vh;
+    overflow: hidden; /* Blocca lo scroll verticale della pagina */
 }
 
 /* Header */
@@ -458,7 +459,7 @@ select option {
 /* Footer */
 .footer {
     background-color: var(--bg-light);
-    padding: 1rem 2rem;
+    padding: 8px;
     border-top: 1px solid var(--border-color);
     text-align: center;
     font-size: 0.8rem;
