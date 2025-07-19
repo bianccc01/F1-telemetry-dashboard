@@ -45,7 +45,7 @@ const RaceChart = {
             }));
 
         const tooltip = d3.select("body").append("div")
-            .attr("class", "tooltip")
+            .attr("class", "tooltip race-chart-tooltip")
             .style("opacity", 0);
 
         const tyreImages = {
@@ -82,7 +82,7 @@ const RaceChart = {
                 .style("fill", driverData.color)
                 .on("mouseover", (event, d) => {
                     tooltip.transition()
-                        .duration(200)
+                        .duration(0)
                         .style("opacity", .9);
                     tooltip.html(`
                         <strong>${driverData.driver.name_acronym}</strong><br/>
@@ -95,7 +95,7 @@ const RaceChart = {
                 })
                 .on("mouseout", () => {
                     tooltip.transition()
-                        .duration(500)
+                        .duration(0)
                         .style("opacity", 0);
                 })
                 .on("click", (event, d) => {
@@ -108,11 +108,9 @@ const RaceChart = {
                         lapSelector.value = lapNumber;
                     }
 
-                    // Update the state
-                    state.selectedLaps[driverNumber] = lapNumber;
-
-                    // Trigger data loading
-                    loadAllData();
+                    // Update the state, ensuring other drivers' selections are cleared
+                    state.selectedLaps = { [driverNumber]: lapNumber };
+                    
                 });
         }
     }

@@ -34,6 +34,14 @@ window.ViolinPlot = {
                 // Create violin plots
                 this.createViolins(g, allData, scales, height);
 
+                // Add title
+                g.append('text')
+                    .attr('x', width / 2)
+                    .attr('y', -20)
+                    .attr('text-anchor', 'middle')
+                    .style('font-size', '16px')
+                    .style('fill', '#fff')
+                    .text('Lap Time Distribution by Driver');
             });
         }
     },
@@ -110,7 +118,7 @@ window.ViolinPlot = {
             .value(d => d);
 
         const tooltip = d3.select("body").append("div")
-            .attr("class", "tooltip violin-tooltip")
+            .attr("class", "tooltip violin-plot-tooltip")
             .style("opacity", 0);
 
         allData.forEach(driverData => {
@@ -120,7 +128,7 @@ window.ViolinPlot = {
                     return `translate(${x}, 0)`;
                 })
                 .on("mouseover", function(event) {
-                    tooltip.transition().duration(200).style("opacity", .9);
+                    tooltip.transition().duration(0).style("opacity", .9);
                     tooltip.html(`<strong>${driverData.driverName}</strong><br/>
                                 Median: ${d3.quantile(driverData.lapTimes.sort(d3.ascending), 0.5).toFixed(3)}s<br/>
                                 IQR: ${(d3.quantile(driverData.lapTimes, 0.75) - d3.quantile(driverData.lapTimes, 0.25)).toFixed(3)}s`)
@@ -128,7 +136,7 @@ window.ViolinPlot = {
                         .style("top", (event.pageY - 28) + "px");
                 })
                 .on("mouseout", function() {
-                    tooltip.transition().duration(500).style("opacity", 0);
+                    tooltip.transition().duration(0).style("opacity", 0);
                 });
 
             const bins = histogram(driverData.lapTimes);
