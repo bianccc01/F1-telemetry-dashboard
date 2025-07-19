@@ -74,7 +74,3 @@ All the data used in this project is provided by the [Open F1 API](https://openf
 *   **Implement a live session mode:** To visualize telemetry data in real-time.
 *   **Improve the user interface:** With more advanced filtering and comparison options.
 *   **Add driver and team statistics:** To provide more context to the data.
-
-## License
-
-This project is licensed under the MIT License. See the `LICENSE` file for details.
