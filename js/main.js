@@ -689,6 +689,9 @@ function updateCharts() {
         backToRaceButton.style.display = 'none';
         d3.selectAll('.tooltip:not(.violin-tooltip)').remove();
         ViolinPlot.create();
+        if (state.selectedDrivers.some(d => d)) {
+            fetchAllLapsForRaceChart();
+        }
     } else {
         // Mostra solo i grafici dei singoli giri
         raceWideCharts.style.display = 'none';
@@ -851,4 +854,33 @@ function clearCharts() {
     d3.select('#throttle-chart').selectAll('*').remove();
     d3.select('#brake-chart').selectAll('*').remove();
     d3.select('#gear-chart').selectAll('*').remove();
+}
+
+async function fetchAllLapsForRaceChart() {
+    const driversToLoad = state.selectedDrivers.filter(d => d);
+    if (driversToLoad.length === 0) {
+        RaceChart.create({});
+        return;
+    }
+
+    showLoading();
+    try {
+        const lapData = {};
+        for (const driver of driversToLoad) {
+            const driverNumber = driver.driver_number;
+            if (!state.lapsByDriver[driverNumber]) {
+                state.lapsByDriver[driverNumber] = await API.getLaps(state.selectedSession.session_key, driverNumber);
+            }
+            lapData[driverNumber] = {
+                laps: state.lapsByDriver[driverNumber],
+                driver: driver,
+                color: driver.color,
+            };
+        }
+        RaceChart.create(lapData);
+    } catch (error) {
+        console.error('Error fetching laps for race chart:', error);
+    } finally {
+        hideLoading();
+    }
 }
