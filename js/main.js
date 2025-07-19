@@ -255,6 +255,7 @@ async function handleGPChange(event) {
         populateSessionSelector();
         resetDriverSelectors();
         resetLapSelector();
+        loadTrackData(state.selectedYear, location, country);
     } catch (error) {
         console.error('Error loading sessions:', error);
     }
@@ -304,7 +305,6 @@ async function handleSessionChange(event) {
 
         populateDriverSelectors();
         resetLapSelector();
-        loadTrackData(sessionKey);
     } catch (error) {
         console.error('Error loading drivers:', error);
     }
@@ -312,9 +312,15 @@ async function handleSessionChange(event) {
     hideLoading();
 }
 
-async function loadTrackData(sessionKey) {
+async function loadTrackData(year, location, country) {
     try {
-        const locationData = await API.getCarData(sessionKey);
+        const fastestLap = await API.getFastestLapOfGP(year, location, country);
+        if (!fastestLap) {
+            console.error('No fastest lap found for the GP.');
+            return;
+        }
+
+        const locationData = await API.getCarData(fastestLap.session_key, fastestLap.driver_number, fastestLap.lap_number);
         const trackData = {
             'track': {
                 data: locationData,
@@ -455,21 +461,21 @@ function updateLapSelectors() {
 
         // Populate laps if available
         if (state.lapsByDriver[driver.driver_number]) {
-            state.lapsByDriver[driver.driver_number].forEach(lap => {
-                const option = document.createElement('option');
-                option.value = lap.lap_number;
-                let lapDuration = lap.lap_duration;
-                if (lapDuration === null) {
-                    lapDuration = 'N/A'; // Handle null duration
-                } else if (typeof lapDuration === 'number') {
-                    // convert lap duration to a mm:ss format
-                    const minutes = Math.floor(lapDuration / 60);
-                    const seconds = (lapDuration % 60).toFixed(3);
-                    lapDuration = `${minutes}:${seconds.padStart(6, '0')}`; // Ensure 2 digits for seconds
-                }
-                option.textContent = `Lap ${lap.lap_number} - ${lapDuration}`;
-                selector.appendChild(option);
-            });
+            state.lapsByDriver[driver.driver_number]
+                .filter(lap => lap.lap_duration !== null) // Filter out laps with null duration
+                .forEach(lap => {
+                    const option = document.createElement('option');
+                    option.value = lap.lap_number;
+                    let lapDuration = lap.lap_duration;
+                    if (typeof lapDuration === 'number') {
+                        // convert lap duration to a mm:ss format
+                        const minutes = Math.floor(lapDuration / 60);
+                        const seconds = (lapDuration % 60).toFixed(3);
+                        lapDuration = `${minutes}:${seconds.padStart(6, '0')}`; // Ensure 2 digits for seconds
+                    }
+                    option.textContent = `Lap ${lap.lap_number} - ${lapDuration}`;
+                    selector.appendChild(option);
+                });
         }
 
         selector.value = state.selectedLaps[driver.driver_number] || '';

@@ -113,14 +113,15 @@ const API = {
     // Ottieni dati telemetria
     async getCarData(sessionKey, driverNumber, lapNumber) {
         if (!driverNumber) {
-            // No driver selected, we can't get any location data.
-            // This is used for drawing the track outline.
-            // The API requires a driver_number for the /location endpoint.
-            // To avoid an error, we return an empty array.
-            return [];
+            const drivers = await this.getDrivers(sessionKey);
+            if (drivers.length > 0) {
+                driverNumber = drivers[0].driver_number;
+            } else {
+                return [];
+            }
         }
-        if (!driverNumber || !lapNumber) {
-            // Only fetch location data for the track outline
+
+        if (!lapNumber) {
             return await this.fetchData('/location', { session_key: sessionKey, driver_number: driverNumber });
         }
 
@@ -208,6 +209,30 @@ const API = {
         return validLaps.reduce((best, lap) =>
             lap.lap_duration < best.lap_duration ? lap : best
         );
+    },
+
+    async getFastestLapOfGP(year, location, country) {
+        const sessions = await this.getSessionsByGP(year, location, country);
+        const sessionKeys = sessions.map(s => s.session_key);
+
+        let fastestLapOverall = null;
+
+        for (const sessionKey of sessionKeys) {
+            const laps = await this.fetchData('/laps', { session_key: sessionKey, 'lap_duration>': 0 });
+            if (!laps || laps.length === 0) continue;
+
+            let fastestLapInSession = laps[0];
+            for (const lap of laps) {
+                if (lap.lap_duration < fastestLapInSession.lap_duration) {
+                    fastestLapInSession = lap;
+                }
+            }
+
+            if (!fastestLapOverall || fastestLapInSession.lap_duration < fastestLapOverall.lap_duration) {
+                fastestLapOverall = fastestLapInSession;
+            }
+        }
+        return fastestLapOverall;
     },
 
     async getWeatherData(sessionKey) {
