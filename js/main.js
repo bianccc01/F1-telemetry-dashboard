@@ -256,6 +256,7 @@ async function handleGPChange(event) {
         populateSessionSelector();
         resetDriverSelectors();
         resetLapSelector();
+        resetWeatherInfo();
         loadTrackData(state.selectedYear, location, country);
     } catch (error) {
         console.error('Error loading sessions:', error);
@@ -487,6 +488,11 @@ function resetDriverSelectors() {
 
 function resetLapSelector() {
     document.getElementById('lap-selectors-container').innerHTML = '';
+}
+
+function resetWeatherInfo() {
+    const container = document.getElementById('weather-info');
+    container.innerHTML = '<p>No weather data available.</p>';
 }
 
 function updateLapSelectors() {
