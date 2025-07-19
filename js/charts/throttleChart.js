@@ -108,13 +108,13 @@ window.ThrottleChart = {
 
     prepareData() {
         const allData = [];
-        const drivers = Object.keys(state.telemetryData);
+        const drivers = Object.keys(state.telemetryData || {}); // Ensure telemetryData is an object
 
         drivers.forEach(driverNumber => {
             const driverData = state.telemetryData[driverNumber];
-            const data = driverData.data;
-            const color = driverData.color;
-            const driverName = driverData.driver.name_acronym;
+            const data = driverData?.data || [];
+            const color = driverData?.color;
+            const driverName = driverData?.driver?.name_acronym;
 
             const validData = data
                 .filter(d => d.throttle != null && d.date != null)
@@ -128,7 +128,7 @@ window.ThrottleChart = {
                     driverName,
                     color,
                     data: dataWithDistance,
-                    sectorTimes: driverData.sectorTimes,
+                    sectorTimes: driverData?.sectorTimes,
                 });
             }
         });

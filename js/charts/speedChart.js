@@ -133,13 +133,13 @@ window.SpeedChart = {
 
     prepareData() {
         const allData = [];
-        const drivers = Object.keys(state.telemetryData);
+        const drivers = Object.keys(state.telemetryData || {}); // Ensure telemetryData is an object
 
         drivers.forEach(driverNumber => {
             const driverData = state.telemetryData[driverNumber];
-            const data = driverData.data;
-            const color = driverData.color;
-            const driverName = driverData.driver.name_acronym;
+            const data = driverData?.data || [];
+            const color = driverData?.color;
+            const driverName = driverData?.driver?.name_acronym;
 
             // Filter and sort data by time
             const validData = data
@@ -147,7 +147,6 @@ window.SpeedChart = {
                 .sort((a, b) => new Date(a.date) - new Date(b.date));
 
             if (validData.length > 0) {
-                // Calculate cumulative distance from the starting point
                 const dataWithDistance = SpeedChart.calculateDistance(validData);
 
                 allData.push({
@@ -155,7 +154,7 @@ window.SpeedChart = {
                     driverName,
                     color,
                     data: dataWithDistance,
-                    sectorTimes: driverData.sectorTimes,
+                    sectorTimes: driverData?.sectorTimes,
                 });
             }
         });

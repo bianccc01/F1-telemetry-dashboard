@@ -10,9 +10,46 @@ const API = {
         laps: new Map()
     },
 
-    // Metodo helper per fare richieste
-    async fetchData(endpoint, params = {}) {
+    // Coda di richieste e rate limiting
+    requestQueue: [],
+    isProcessing: false,
+    rateLimit: 4, // Richieste al secondo (ridotto per sicurezza)
+    lastRequestTime: 0,
+    requestCounter: 0,
+    requestWindowStart: 0,
+
+
+    // Funzione per processare la coda
+    async processQueue() {
+        if (this.isProcessing || this.requestQueue.length === 0) {
+            return;
+        }
+
+        this.isProcessing = true;
+
+        const { endpoint, params, resolve, reject } = this.requestQueue.shift();
+
         try {
+            const now = Date.now();
+            if (now - this.requestWindowStart > 1000) {
+                this.requestWindowStart = now;
+                this.requestCounter = 0;
+            }
+
+            const timeSinceLastRequest = now - this.lastRequestTime;
+            const delay = Math.max(0, (1000 / this.rateLimit) - timeSinceLastRequest);
+
+            if (this.requestCounter >= this.rateLimit) {
+                const waitForNextWindow = (this.requestWindowStart + 1000) - now;
+                await new Promise(resolve => setTimeout(resolve, Math.max(delay, waitForNextWindow)));
+                // Dopo l'attesa, ricalcoliamo i valori
+                this.requestWindowStart = Date.now();
+                this.requestCounter = 0;
+            } else {
+                await new Promise(resolve => setTimeout(resolve, delay));
+            }
+
+
             const url = new URL(`${this.baseURL}${endpoint}`);
             Object.keys(params).forEach(key => {
                 if (params[key] !== null && params[key] !== undefined) {
@@ -28,11 +65,25 @@ const API = {
             }
 
             const data = await response.json();
-            return data;
+            this.lastRequestTime = Date.now();
+            this.requestCounter++;
+            resolve(data);
         } catch (error) {
             console.error('API Error:', error);
-            throw error;
+            reject(error);
+        } finally {
+            this.isProcessing = false;
+            // Processa la richiesta successiva
+            this.processQueue();
         }
+    },
+
+    // Metodo helper per fare richieste (ora accoda le richieste)
+    fetchData(endpoint, params = {}) {
+        return new Promise((resolve, reject) => {
+            this.requestQueue.push({ endpoint, params, resolve, reject });
+            this.processQueue();
+        });
     },
 
     // Ottieni tutte le sessioni

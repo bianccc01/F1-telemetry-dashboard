@@ -884,7 +884,7 @@ function updateDriverInfo() {
     const container = document.getElementById('driver-info-container');
     container.innerHTML = ''; // Clear previous info
 
-    const drivers = Object.values(state.telemetryData);
+    const drivers = Object.values(state.telemetryData || {}); // Ensure telemetryData is an object
 
     if (drivers.length === 0) {
         container.innerHTML = '<p>No data loaded.</p>';
