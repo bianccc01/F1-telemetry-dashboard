@@ -66,8 +66,21 @@ window.Tooltip = {
         const mainChart = this.charts[0];
         if (!mainChart || !mainChart.scales) return;
 
-        const currentXScale = transform ? transform.rescaleX(mainChart.scales.xScale) : mainChart.scales.xScale;
-        const x0 = currentXScale.invert(pointer[0]);
+        // CORREZIONE PRINCIPALE: Ottieni sempre il transform corrente dal ZoomManager
+        const currentTransform = window.ZoomManager ? window.ZoomManager.getTransform() : d3.zoomIdentity;
+        const isZoomed = currentTransform.k !== 1;
+
+        // Usa sempre il transform corrente, non quello passato come parametro
+        let effectiveTransform = isZoomed ? currentTransform : null;
+
+        // Converti la posizione del mouse usando il transform corrente
+        let x0;
+        if (effectiveTransform) {
+            const transformedScale = effectiveTransform.rescaleX(mainChart.scales.xScale);
+            x0 = transformedScale.invert(pointer[0]);
+        } else {
+            x0 = mainChart.scales.xScale.invert(pointer[0]);
+        }
 
         let pointForTrackMap = null;
 
@@ -79,7 +92,13 @@ window.Tooltip = {
             const tooltip = d3.select(`body > .tooltip.tooltip-${chartId}`);
             let tooltipData = [];
 
-            const effectiveXScale = transform ? transform.rescaleX(scales.xScale) : scales.xScale;
+            // Usa lo stesso transform per questo chart
+            let chartXScale;
+            if (effectiveTransform) {
+                chartXScale = effectiveTransform.rescaleX(scales.xScale);
+            } else {
+                chartXScale = scales.xScale;
+            }
 
             allData.forEach(driver => {
                 const i = this.bisectDistance(driver.data, x0, 1);
@@ -94,22 +113,34 @@ window.Tooltip = {
                     driverName: driver.driverName,
                     value: yValue(d),
                     color: driver.color,
-                    x: effectiveXScale(d.distance),
-                    y: scales.yScale(yValue(d)),
+                    distance: d.distance
                 });
             });
 
             if (tooltipData.length > 0) {
+                // Calcola la posizione X corretta per la linea e il tooltip
+                const lineX = chartXScale(tooltipData[0].distance);
+
                 g.select('.tooltip-line')
-                    .attr('x1', effectiveXScale(x0))
-                    .attr('x2', effectiveXScale(x0))
+                    .attr('x1', lineX)
+                    .attr('x2', lineX)
                     .attr('y1', 0)
                     .attr('y2', scales.yScale.range()[0]);
 
-                tooltip.html(tooltipData.map(d => `<div style="color: ${d.color}">${d.driverName}: ${yFormat(d.value)} ${yLabel}</div>`).join(''))
+                // CORREZIONE: Usa la posizione del mouse del pointer invece di calcolare da lineX
+                const svgRect = g.node().ownerSVGElement.getBoundingClientRect();
+                const gRect = g.node().getBoundingClientRect();
+
+                // Calcola la posizione assoluta corretta del tooltip
+                const tooltipX = svgRect.left + pointer[0] + 70 + 15; // 70 è il margin.left del chart
+                const tooltipY = gRect.top + scales.yScale(tooltipData[0].value);
+
+                tooltip.html(tooltipData.map(d =>
+                    `<div style="color: ${d.color}">${d.driverName}: ${yFormat(d.value)} ${yLabel}</div>`
+                ).join(''))
                     .style('opacity', 1)
-                    .style('left', (g.node().getBoundingClientRect().left + effectiveXScale(x0) + 15) + 'px')
-                    .style('top', (g.node().getBoundingClientRect().top + scales.yScale(tooltipData[0].value)) + 'px');
+                    .style('left', tooltipX + 'px')
+                    .style('top', tooltipY + 'px');
             }
         });
 

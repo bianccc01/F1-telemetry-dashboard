@@ -8,7 +8,6 @@ window.SpeedChart = {
         return new Date(0, 0, 0, 0, minutes, seconds, Number(ms || 0));
     },
 
-
     create() {
         const container = d3.select('#speed-chart');
         container.selectAll('*').remove(); // Clear existing chart
@@ -56,15 +55,38 @@ window.SpeedChart = {
         // Legenda
         this.createLegend(g, allData, width);
 
-        // Tooltip
-        // this.createTooltip(g, allData, scales, width, height);
+        // CORREZIONE: Registra questo chart nel sistema charts per il tooltip
+        if (!window.chartInstances) window.chartInstances = [];
 
+        // Pulisci le istanze precedenti per questo container
+        window.chartInstances = window.chartInstances.filter(chart =>
+            chart.container.attr('id') !== container.attr('id')
+        );
+
+        // Aggiungi la nuova istanza
+        window.chartInstances.push({
+            container: container,
+            allData: allData,
+            scales: scales,
+            g: g,
+            yValue: d => d.speed,
+            yLabel: 'km/h',
+            yFormat: d => d3.format('.1f')(d)
+        });
+
+        // Zoom
         const zoom = d3.zoom()
             .scaleExtent([1, 10])
             .translateExtent([[0, 0], [width, height]])
             .extent([[0, 0], [width, height]])
             .on('zoom', (event) => {
                 const transform = event.transform;
+
+                // AGGIUNTO: Aggiorna il ZoomManager con il nuovo transform
+                if (window.ZoomManager) {
+                    window.ZoomManager.setTransform(transform);
+                }
+
                 const newXScale = transform.rescaleX(scales.xScale);
 
                 g.select('.x-axis').call(d3.axisBottom(newXScale).tickFormat(d => d3.format('.0f')(d) + ' m'));
@@ -75,26 +97,38 @@ window.SpeedChart = {
                     .curve(d3.curveMonotoneX);
 
                 g.selectAll('.line').attr('d', lineGenerator);
-
-                if (Tooltip.moveTooltips) {
-                    Tooltip.moveTooltips(event, transform);
-                }
             });
 
         svg.call(zoom);
 
+        // MODIFICATO: Overlay semplificato senza passare il transform
         g.append('rect')
             .attr('class', 'overlay')
             .attr('width', width)
             .attr('height', height)
             .style('fill', 'none')
             .style('pointer-events', 'all')
-            .on('mouseover', () => Tooltip.showTooltips())
-            .on('mouseout', () => Tooltip.hideTooltips())
+            .on('mouseover', () => {
+                if (window.Tooltip && window.Tooltip.showTooltips) {
+                    window.Tooltip.showTooltips();
+                }
+            })
+            .on('mouseout', () => {
+                if (window.Tooltip && window.Tooltip.hideTooltips) {
+                    window.Tooltip.hideTooltips();
+                }
+            })
             .on('mousemove', (event) => {
-                const transform = d3.zoomTransform(svg.node());
-                Tooltip.moveTooltips(event, transform.k !== 1 ? transform : null);
+                if (window.Tooltip && window.Tooltip.moveTooltips) {
+                    // Non passare più il transform, verrà preso automaticamente dal ZoomManager
+                    window.Tooltip.moveTooltips(event);
+                }
             });
+
+        // AGGIUNTO: Inizializza il tooltip con i chart registrati
+        if (window.Tooltip && window.chartInstances) {
+            window.Tooltip.initialize(window.chartInstances);
+        }
     },
 
     prepareData() {
@@ -129,7 +163,6 @@ window.SpeedChart = {
         return allData;
     },
 
-
     calculateDistance: function(telemetryData) {
         const dataWithDistance = [];
         let cumulativeDistance = 0;
@@ -157,7 +190,6 @@ window.SpeedChart = {
 
         return dataWithDistance;
     },
-
 
     createScales(allData, width, height) {
         const allPoints = allData.flatMap(d => d.data);
@@ -253,5 +285,4 @@ window.SpeedChart = {
                 .text(driverData.driverName);
         });
     },
-
 };
