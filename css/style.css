@@ -531,3 +531,18 @@ select option {
     font-weight: bold;
     color: #eee;
 }
+
+/* Added styles */
+.race-chart-tooltip, .violin-plot-tooltip {
+    z-index: 1000 !important;
+    pointer-events: none !important;
+}
+
+.telemetry-tooltip {
+    z-index: 500 !important;
+    pointer-events: none !important;
+}
+
+.tooltip-line {
+    pointer-events: none !important;
+}

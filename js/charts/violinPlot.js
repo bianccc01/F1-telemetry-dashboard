@@ -1,7 +1,12 @@
 window.ViolinPlot = {
+    tooltip: null, // Store tooltip reference
+
     create() {
         const container = d3.select('#violin-plot-chart');
         container.selectAll('*').remove(); // Clear existing chart
+
+        // Clean up existing tooltip
+        this.cleanup();
 
         // Check conditions for displaying the chart
         if (state.selectedGP && !state.selectedLap) {
@@ -73,7 +78,7 @@ window.ViolinPlot = {
             .padding(0.05);
 
         const yScale = d3.scaleLinear()
-            .domain([60, d3.max(allLapTimes) + 10]) // Start y-axis from 0
+            .domain([60, d3.max(allLapTimes) + 10]) // Start y-axis from 60
             .range([height, 0]);
 
         return { xScale, yScale };
@@ -117,9 +122,17 @@ window.ViolinPlot = {
             .thresholds(yScale.ticks(20))
             .value(d => d);
 
-        const tooltip = d3.select("body").append("div")
+        // Create tooltip only once and store reference
+        this.tooltip = d3.select("body").append("div")
             .attr("class", "tooltip violin-plot-tooltip")
-            .style("opacity", 0);
+            .style("position", "absolute")
+            .style("background", "rgba(0, 0, 0, 0.8)")
+            .style("color", "white")
+            .style("padding", "10px")
+            .style("border-radius", "5px")
+            .style("pointer-events", "none")
+            .style("opacity", 0)
+            .style("z-index", "999"); // Lower z-index than race chart
 
         allData.forEach(driverData => {
             const gViolin = g.append("g")
@@ -127,16 +140,20 @@ window.ViolinPlot = {
                     const x = numDrivers === 1 ? xScale(driverData.driverName) + bandwidth / 2 : xScale(driverData.driverName);
                     return `translate(${x}, 0)`;
                 })
-                .on("mouseover", function(event) {
-                    tooltip.transition().duration(0).style("opacity", .9);
-                    tooltip.html(`<strong>${driverData.driverName}</strong><br/>
-                                Median: ${d3.quantile(driverData.lapTimes.sort(d3.ascending), 0.5).toFixed(3)}s<br/>
-                                IQR: ${(d3.quantile(driverData.lapTimes, 0.75) - d3.quantile(driverData.lapTimes, 0.25)).toFixed(3)}s`)
-                        .style("left", (event.pageX) + "px")
-                        .style("top", (event.pageY - 28) + "px");
+                .on("mouseover", (event) => {
+                    if (this.tooltip) {
+                        this.tooltip.transition().duration(200).style("opacity", .9);
+                        this.tooltip.html(`<strong>${driverData.driverName}</strong><br/>
+                                    Median: ${d3.quantile(driverData.lapTimes.sort(d3.ascending), 0.5).toFixed(3)}s<br/>
+                                    IQR: ${(d3.quantile(driverData.lapTimes, 0.75) - d3.quantile(driverData.lapTimes, 0.25)).toFixed(3)}s`)
+                            .style("left", (event.pageX + 10) + "px")
+                            .style("top", (event.pageY - 40) + "px");
+                    }
                 })
-                .on("mouseout", function() {
-                    tooltip.transition().duration(0).style("opacity", 0);
+                .on("mouseout", () => {
+                    if (this.tooltip) {
+                        this.tooltip.transition().duration(200).style("opacity", 0);
+                    }
                 });
 
             const bins = histogram(driverData.lapTimes);
@@ -173,7 +190,7 @@ window.ViolinPlot = {
                 .attr("y2", yScale(q1))
                 .attr("stroke", "black")
                 .attr("stroke-width", 2);
-            
+
             interQuantileRange.append("line")
                 .attr("x1", bandwidth / 2 - 5)
                 .attr("x2", bandwidth / 2 + 5)
@@ -198,5 +215,23 @@ window.ViolinPlot = {
                 .attr("stroke", "black")
                 .attr("stroke-width", 1);
         });
+    },
+
+    cleanup: function() {
+        // Remove existing tooltip
+        if (this.tooltip) {
+            this.tooltip.remove();
+            this.tooltip = null;
+        }
+
+        // Clean up any orphaned tooltips
+        d3.selectAll(".violin-plot-tooltip").remove();
+    },
+
+    destroy: function() {
+        // Call this when completely destroying the chart
+        this.cleanup();
+        const container = d3.select('#violin-plot-chart');
+        container.selectAll('*').remove();
     }
 };

@@ -11,8 +11,25 @@ window.Tooltip = {
             if (svg.empty()) return;
 
             const g = svg.select('g');
-            const width = +svg.attr('width') - 170;
-            const height = +svg.attr('height') - 90;
+
+            // CORREZIONE: Calcolo sicuro delle dimensioni
+            const svgWidth = +svg.attr('width') || 0;
+            const svgHeight = +svg.attr('height') || 0;
+
+            // Se le dimensioni sono troppo piccole, salta questo chart
+            if (svgWidth < 200 || svgHeight < 120) {
+                console.warn(`Skipping chart ${chartContainer.attr('id')} - dimensions too small:`, {svgWidth, svgHeight});
+                return;
+            }
+
+            const width = Math.max(0, svgWidth - 170);
+            const height = Math.max(0, svgHeight - 90);
+
+            // Doppio controllo per evitare dimensioni negative
+            if (width <= 0 || height <= 0) {
+                console.warn(`Skipping chart ${chartContainer.attr('id')} - calculated dimensions invalid:`, {width, height});
+                return;
+            }
 
             this.addTooltipElements(chartContainer, g);
             this.addOverlay(chartContainer, g, width, height);
@@ -22,14 +39,21 @@ window.Tooltip = {
     addTooltipElements(chartContainer, g) {
         const chartId = chartContainer.attr('id');
 
-        // Rimuovi tooltip esistenti per questo grafico
+        // Rimuovi tooltip esistenti per questo grafico SOLO se sono tooltip di telemetria
         d3.select(`body > .tooltip.tooltip-${chartId}`).remove();
         g.selectAll('.tooltip-line').remove();
 
-        // Aggiungi tooltip al body per evitare clipping
+        // Aggiungi tooltip al body per evitare clipping (SOLO per telemetria)
         d3.select('body').append('div')
-            .attr('class', `tooltip tooltip-${chartId}`)
-            .style('opacity', 0);
+            .attr('class', `tooltip tooltip-${chartId} telemetry-tooltip`)
+            .style('opacity', 0)
+            .style('position', 'absolute')
+            .style('background', 'rgba(0, 0, 0, 0.8)')
+            .style('color', 'white')
+            .style('padding', '10px')
+            .style('border-radius', '5px')
+            .style('pointer-events', 'none')
+            .style('z-index', '500'); // Z-index più basso per telemetria
 
         g.append('line')
             .attr('class', 'tooltip-line')
@@ -40,6 +64,15 @@ window.Tooltip = {
     },
 
     addOverlay(chartContainer, g, width, height) {
+        // Verifica finale delle dimensioni prima di creare l'overlay
+        if (width <= 0 || height <= 0) {
+            console.warn(`Cannot create overlay for ${chartContainer.attr('id')} - invalid dimensions:`, {width, height});
+            return;
+        }
+
+        // Rimuovi overlay esistenti per evitare duplicati
+        g.selectAll('.overlay').remove();
+
         g.append('rect')
             .attr('class', 'overlay')
             .attr('width', width)
@@ -52,12 +85,14 @@ window.Tooltip = {
     },
 
     showTooltips() {
-        d3.selectAll('.tooltip').style('opacity', 1);
+        // Mostra SOLO i tooltip di telemetria
+        d3.selectAll('.tooltip.telemetry-tooltip').style('opacity', 1);
         d3.selectAll('.tooltip-line').style('opacity', 1);
     },
 
     hideTooltips() {
-        d3.selectAll('.tooltip:not(.race-chart-tooltip):not(.violin-tooltip)').style('opacity', 0);
+        // Nascondi SOLO i tooltip di telemetria, NON toccare quelli di race/violin
+        d3.selectAll('.tooltip.telemetry-tooltip').style('opacity', 0);
         d3.selectAll('.tooltip-line').style('opacity', 0);
     },
 
@@ -144,8 +179,18 @@ window.Tooltip = {
             }
         });
 
-        if (pointForTrackMap) {
+        if (pointForTrackMap && window.TrackMap && window.TrackMap.updateCarPosition) {
             TrackMap.updateCarPosition(pointForTrackMap);
         }
     },
+
+    // AGGIUNTO: Metodo di cleanup per i tooltip di telemetria
+    cleanup() {
+        console.log("🧹 Tooltip: Cleaning up telemetry tooltips...");
+        d3.selectAll('.tooltip.telemetry-tooltip').remove();
+        d3.selectAll('.tooltip-line').remove();
+        if (window.chartInstances) {
+            window.chartInstances = [];
+        }
+    }
 };

@@ -570,18 +570,65 @@ function handleLapChange(event) {
     state.selectedLaps[driverNumber] = selectedValue;
     updateLoadButtonState();
 }
-
 function handleBackToRace() {
-    // Deseleziona tutti i giri
+    console.log("🔄 Starting back to race cleanup...");
+
+    // 1. PRIMA pulisci tutto PRIMA di resettare lo state
+    if (window.Tooltip && typeof Tooltip.cleanup === 'function') {
+        console.log("🧹 Cleaning Telemetry tooltips...");
+        Tooltip.cleanup();
+    }
+
+    if (typeof RaceChart !== 'undefined' && RaceChart.cleanup) {
+        console.log("🧹 Cleaning RaceChart tooltips...");
+        RaceChart.cleanup();
+    }
+
+    if (typeof ViolinPlot !== 'undefined' && ViolinPlot.cleanup) {
+        console.log("🧹 Cleaning ViolinPlot tooltips...");
+        ViolinPlot.cleanup();
+    }
+
+    // 2. Reset zoom manager
+    if (window.ZoomManager && typeof ZoomManager.reset === 'function') {
+        console.log("🔄 Resetting ZoomManager...");
+        ZoomManager.reset();
+    }
+
+    // 3. Pulizia generale di sicurezza per tutti i tooltip
+    console.log("🧹 General tooltip cleanup...");
+    d3.selectAll(".tooltip").remove();
+    d3.selectAll(".tooltip-line").remove();
+    d3.selectAll(".overlay").remove(); // AGGIUNTO: rimuovi anche gli overlay
+
+    // 4. Reset chart instances PRIMA di resettare lo state
+    if (window.chartInstances) {
+        console.log("📊 Clearing chart instances...");
+        window.chartInstances = [];
+    }
+
+    // 5. SOLO ORA resetta lo state
+    console.log("📊 Resetting state...");
     state.selectedLaps = {};
     state.dataLoaded = false;
+    state.telemetryData = null; // AGGIUNTO: pulisci anche i dati di telemetria
 
-
-    // Resetta i selettori dei giri
+    // 6. Update UI
+    console.log("🔄 Updating UI...");
     updateLapSelectors();
 
-    // Aggiorna i grafici per mostrare la visualizzazione race-wide
-    updateCharts();
+    // 7. RITARDA l'aggiornamento dei chart per dare tempo al DOM di stabilizzarsi
+    setTimeout(() => {
+        console.log("📊 Updating charts after cleanup...");
+        updateCharts();
+
+        // 8. Debug info alla fine
+        if (window.ZoomManager && typeof ZoomManager.debug === 'function') {
+            ZoomManager.debug();
+        }
+
+        console.log("✅ Back to race cleanup completed!");
+    }, 50);
 }
 
 function updateLoadButtonState() {

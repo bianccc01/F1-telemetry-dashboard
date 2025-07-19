@@ -1,7 +1,12 @@
 const RaceChart = {
+    tooltip: null, // Store tooltip reference
+
     create: function(data) {
         const container = d3.select("#race-chart");
         container.selectAll("*").remove(); // Clear previous chart
+
+        // Clean up existing tooltip if it exists
+        this.cleanup();
 
         if (Object.keys(data).length === 0) {
             container.html("<p>No data for race chart.</p>");
@@ -44,9 +49,17 @@ const RaceChart = {
                 return `${minutes}:${seconds.padStart(2, '0')}`;
             }));
 
-        const tooltip = d3.select("body").append("div")
+        // Create tooltip only once and store reference
+        this.tooltip = d3.select("body").append("div")
             .attr("class", "tooltip race-chart-tooltip")
-            .style("opacity", 0);
+            .style("position", "absolute")
+            .style("background", "rgba(0, 0, 0, 0.8)")
+            .style("color", "white")
+            .style("padding", "10px")
+            .style("border-radius", "5px")
+            .style("pointer-events", "none")
+            .style("opacity", 0)
+            .style("z-index", "1000");
 
         const tyreImages = {
             'SOFT': 'https://upload.wikimedia.org/wikipedia/commons/d/df/F1_tire_Pirelli_PZero_Red.svg',
@@ -89,41 +102,80 @@ const RaceChart = {
                 .attr("r", 5)
                 .style("fill", d => tyreColors[d.compound] || driverData.color)
                 .style("stroke", driverData.color)
+                .style("cursor", "pointer")
                 .on("mouseover", (event, d) => {
-                    tooltip.transition()
-                        .duration(0)
-                        .style("opacity", .9);
-                    tooltip.html(`
-                        <strong>${driverData.driver.name_acronym}</strong><br/>
-                        Lap: ${d.lap_number}<br/>
-                        Time: ${Math.floor(d.lap_duration / 60)}:${(d.lap_duration % 60).toFixed(3).padStart(6, '0')}<br/>
-                        <img src="${tyreImages[d.compound]}" alt="${d.compound}" class="tyre-image-tooltip"/>
-                    `)
-                        .style("left", (event.pageX + 5) + "px")
-                        .style("top", (event.pageY - 28) + "px");
+                    if (this.tooltip) {
+                        this.tooltip.transition()
+                            .duration(200)
+                            .style("opacity", 0.9);
+                        this.tooltip.html(`
+                            <strong>${driverData.driver.name_acronym}</strong><br/>
+                            Lap: ${d.lap_number}<br/>
+                            Time: ${Math.floor(d.lap_duration / 60)}:${(d.lap_duration % 60).toFixed(3).padStart(6, '0')}<br/>
+                            <img src="${tyreImages[d.compound]}" alt="${d.compound}" class="tyre-image-tooltip"/>
+                        `)
+                            .style("left", (event.pageX + 10) + "px")
+                            .style("top", (event.pageY - 40) + "px");
+                    }
                 })
                 .on("mouseout", () => {
-                    tooltip.transition()
-                        .duration(0)
-                        .style("opacity", 0);
+                    if (this.tooltip) {
+                        this.tooltip.transition()
+                            .duration(200)
+                            .style("opacity", 0);
+                    }
                 })
                 .on("click", (event, d) => {
+                    event.stopPropagation(); // Prevent event bubbling
+
                     const driverNumber = driverData.driver.driver_number;
                     const lapNumber = d.lap_number;
 
-                    // Update the lap selector
-                    const lapSelector = document.getElementById(`lap-select-${driverNumber}`);
-                    if (lapSelector) {
-                        lapSelector.value = lapNumber;
-                    }
+                    console.log("Race chart click:", { driverNumber, lapNumber }); // Debug log
 
-                    // Update the state, ensuring other drivers' selections are cleared
-                    state.selectedLaps[driverNumber] = lapNumber;
-                    
-                    // Manually trigger the lap change handler to update UI and state
-                    handleLapChange({ target: { dataset: { driverNumber: driverNumber }, value: lapNumber } });
-                    updateLoadButtonState();
+                    // Check if required functions exist
+                    if (typeof handleLapChange === 'function' && typeof updateLoadButtonState === 'function') {
+                        // Update the lap selector
+                        const lapSelector = document.getElementById(`lap-select-${driverNumber}`);
+                        if (lapSelector) {
+                            lapSelector.value = lapNumber;
+                        }
+
+                        // Update the state, ensuring other drivers' selections are cleared
+                        if (typeof state !== 'undefined' && state.selectedLaps) {
+                            state.selectedLaps[driverNumber] = lapNumber;
+
+                            // Manually trigger the lap change handler to update UI and state
+                            handleLapChange({ target: { dataset: { driverNumber: driverNumber }, value: lapNumber } });
+                            updateLoadButtonState();
+                        } else {
+                            console.error("State object or selectedLaps not available");
+                        }
+                    } else {
+                        console.error("Required functions not available:", {
+                            handleLapChange: typeof handleLapChange,
+                            updateLoadButtonState: typeof updateLoadButtonState
+                        });
+                    }
                 });
         }
+    },
+
+    cleanup: function() {
+        // Remove existing tooltip
+        if (this.tooltip) {
+            this.tooltip.remove();
+            this.tooltip = null;
+        }
+
+        // Clean up any orphaned tooltips
+        d3.selectAll(".race-chart-tooltip").remove();
+    },
+
+    destroy: function() {
+        // Call this when completely destroying the chart
+        this.cleanup();
+        const container = d3.select("#race-chart");
+        container.selectAll("*").remove();
     }
 };
