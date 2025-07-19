@@ -400,20 +400,41 @@ async function handleDriverChange(slotIndex, driverNumber) {
                 state.selectedDrivers[i] = null;
             }
         }
+        populateDriverSelectors();
+        updateLapSelectors();
+        updateCharts();
     } else {
         // Driver selected
         const driver = state.availableDrivers.find(d => d.driver_number == driverNumber);
-        state.selectedDrivers[slotIndex] = { ...driver, color: state.slotColors[slotIndex] };
-        if (oldDriverNumber && oldDriverNumber !== driverNumber) {
-            delete state.lapsByDriver[oldDriverNumber];
-            delete state.selectedLaps[oldDriverNumber];
-            delete state.telemetryData[oldDriverNumber];
+        showLoading();
+        try {
+            const laps = await API.getLaps(state.selectedSession.session_key, driver.driver_number);
+            const hasValidLaps = laps.some(lap => lap.lap_duration !== null);
+
+            if (!hasValidLaps) {
+                alert('Error: The selected driver has no valid laps in this session.');
+                // Deselect the driver by calling handleDriverChange again with null
+                handleDriverChange(slotIndex, null);
+            } else {
+                state.selectedDrivers[slotIndex] = { ...driver, color: state.slotColors[slotIndex] };
+                state.lapsByDriver[driver.driver_number] = laps; // Store the laps
+                if (oldDriverNumber && oldDriverNumber !== driverNumber) {
+                    delete state.lapsByDriver[oldDriverNumber];
+                    delete state.selectedLaps[oldDriverNumber];
+                    delete state.telemetryData[oldDriverNumber];
+                }
+                populateDriverSelectors();
+                updateLapSelectors();
+                updateCharts();
+            }
+        } catch (error) {
+            console.error(`Error fetching laps for driver ${driver.driver_number}:`, error);
+            // Optionally, handle the error case, e.g., by deselecting the driver
+            handleDriverChange(slotIndex, null);
+        } finally {
+            hideLoading();
         }
     }
-
-    populateDriverSelectors();
-    updateLapSelectors();
-    updateCharts();
 }
 
 // Reset functions
