@@ -56,6 +56,14 @@ const RaceChart = {
             'WET': 'https://upload.wikimedia.org/wikipedia/commons/6/63/F1_tire_Pirelli_Cinturato_Blue.svg'
         };
 
+        const tyreColors = {
+            'SOFT': 'red',
+            'MEDIUM': 'yellow',
+            'HARD': 'white',
+            'INTERMEDIATE': 'green',
+            'WET': 'blue'
+        };
+
         const line = d3.line()
             .x(d => x(d.lap_number))
             .y(d => y(d.lap_duration));
@@ -79,7 +87,8 @@ const RaceChart = {
                 .attr("cx", d => x(d.lap_number))
                 .attr("cy", d => y(d.lap_duration))
                 .attr("r", 5)
-                .style("fill", driverData.color)
+                .style("fill", d => tyreColors[d.compound] || driverData.color)
+                .style("stroke", driverData.color)
                 .on("mouseover", (event, d) => {
                     tooltip.transition()
                         .duration(0)
