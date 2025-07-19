@@ -741,7 +741,11 @@ function updateCharts() {
         d3.selectAll('.tooltip').remove();
         ViolinPlot.create();
         if (state.selectedDrivers.some(d => d)) {
-            fetchAllLapsForRaceChart();
+            fetchAllLapsForRaceChart().then(() => {
+                if (RaceChart.initializeTooltip) {
+                    RaceChart.initializeTooltip();
+                }
+            });
         } else {
             RaceChart.create({});
         }
