@@ -8,11 +8,18 @@ const TrackMap = {
         const container = d3.select('#track-map');
         container.select('svg').remove();
 
+        // Set explicit dimensions on the container if not already set
+        const containerNode = container.node();
+        const containerRect = containerNode.getBoundingClientRect();
 
         const svg = container.append('svg')
             .attr('width', '100%')
             .attr('height', '100%')
-            .attr('viewBox', '0 0 300 300'); // Fixed viewBox for consistent scaling
+            .attr('viewBox', '0 0 300 300')
+            .attr('preserveAspectRatio', 'xMidYMid meet') // This ensures proper scaling
+            .style('display', 'block') // Prevents inline SVG spacing issues
+            .style('max-width', '100%') // Prevents overflow
+            .style('max-height', '100%');
 
         // Get the first driver's data for the track outline
         const firstDriverKey = Object.keys(telemetryData)[0];
