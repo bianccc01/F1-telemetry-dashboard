@@ -6,7 +6,8 @@ const TrackMap = {
 
     create(telemetryData) {
         const container = d3.select('#track-map');
-        container.selectAll('*').remove(); // Clear previous map
+        container.select('svg').remove();
+
 
         const svg = container.append('svg')
             .attr('width', '100%')

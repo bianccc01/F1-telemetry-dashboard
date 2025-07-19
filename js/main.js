@@ -341,10 +341,14 @@ async function handleSessionChange(event) {
 }
 
 async function loadTrackData(year, location, country) {
+    const loader = document.getElementById('track-map-loader');
+    loader.style.display = 'flex';
     try {
-        const fastestLap = await API.getFastestLapOfGP(year, location, country);
+        const driverNumber = state.selectedDrivers[0] ? state.selectedDrivers[0].driver_number : null;
+        const fastestLap = await API.getFastestLapOfGP(year, location, country, driverNumber);
         if (!fastestLap) {
             console.error('No fastest lap found for the GP.');
+            loader.style.display = 'none';
             return;
         }
 
@@ -359,6 +363,8 @@ async function loadTrackData(year, location, country) {
         TrackMap.create(trackData);
     } catch (error) {
         console.error('Error loading track data:', error);
+    } finally {
+        loader.style.display = 'none';
     }
 }
 

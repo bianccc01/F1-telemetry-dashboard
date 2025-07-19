@@ -211,14 +211,18 @@ const API = {
         );
     },
 
-    async getFastestLapOfGP(year, location, country) {
+    async getFastestLapOfGP(year, location, country, driverNumber = null) {
         const sessions = await this.getSessionsByGP(year, location, country);
         const sessionKeys = sessions.map(s => s.session_key);
 
         let fastestLapOverall = null;
 
         for (const sessionKey of sessionKeys) {
-            const laps = await this.fetchData('/laps', { session_key: sessionKey, 'lap_duration>': 0 });
+            const params = { session_key: sessionKey, 'lap_duration>': 0 };
+            if (driverNumber) {
+                params.driver_number = driverNumber;
+            }
+            const laps = await this.fetchData('/laps', params);
             if (!laps || laps.length === 0) continue;
 
             let fastestLapInSession = laps[0];
