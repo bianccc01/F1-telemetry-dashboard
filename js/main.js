@@ -652,6 +652,7 @@ function updateCharts() {
         individualLapCharts.style.display = 'none';
         violinPlotContainer.style.display = 'block';
         backToRaceButton.style.display = 'none';
+        d3.selectAll('.tooltip:not(.violin-tooltip)').remove();
         ViolinPlot.create();
     } else {
         // Mostra solo i grafici dei singoli giri
@@ -659,6 +660,7 @@ function updateCharts() {
         individualLapCharts.style.display = 'block';
         violinPlotContainer.style.display = 'none';
         backToRaceButton.style.display = 'block';
+        d3.select('.violin-tooltip').remove();
     }
 
     SpeedChart.create(state.telemetryData);

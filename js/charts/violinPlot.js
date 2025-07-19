@@ -84,17 +84,24 @@ window.ViolinPlot = {
             .attr("transform", "translate(0," + height + ")")
             .call(d3.axisBottom(scales.xScale));
 
-        g.append("g").call(d3.axisLeft(scales.yScale));
+        const yAxis = d3.axisLeft(scales.yScale)
+            .tickFormat(d => {
+                const minutes = Math.floor(d / 60);
+                const seconds = d % 60;
+                return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            });
+
+        g.append("g").call(yAxis);
 
         // Y-axis label
         g.append('text')
             .attr('transform', 'rotate(-90)')
-            .attr('y', -40)
+            .attr('y', -50)
             .attr('x', -height / 2)
             .attr('dy', '1em')
             .style('text-anchor', 'middle')
             .style('fill', '#fff')
-            .text('Lap Time (seconds)');
+            .text('Lap Time');
     },
 
     createViolins(g, allData, scales, height) {
@@ -111,7 +118,7 @@ window.ViolinPlot = {
             .value(d => d);
 
         const tooltip = d3.select("body").append("div")
-            .attr("class", "tooltip")
+            .attr("class", "tooltip violin-tooltip")
             .style("opacity", 0);
 
         allData.forEach(driverData => {
