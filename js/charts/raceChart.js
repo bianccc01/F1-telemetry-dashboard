@@ -111,6 +111,9 @@ const RaceChart = {
                     // Update the state, ensuring other drivers' selections are cleared
                     state.selectedLaps = { [driverNumber]: lapNumber };
                     
+                    // Manually trigger the lap change handler to update UI and state
+                    handleLapChange({ target: { dataset: { driverNumber: driverNumber }, value: lapNumber } });
+                    updateLoadButtonState();
                 });
         }
     }

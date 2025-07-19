@@ -37,7 +37,7 @@ window.ViolinPlot = {
                 // Add title
                 g.append('text')
                     .attr('x', width / 2)
-                    .attr('y', -20)
+                    .attr('y', -30)
                     .attr('text-anchor', 'middle')
                     .style('font-size', '16px')
                     .style('fill', '#fff')

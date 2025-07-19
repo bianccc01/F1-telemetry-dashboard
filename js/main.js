@@ -667,15 +667,17 @@ function updateCharts() {
     const backToRaceButton = document.getElementById('back-to-race-button');
 
     const singleGPSelected = state.selectedGP;
+    const driverCount = state.selectedDrivers.filter(d => d).length;
     const noLapSelected = Object.values(state.selectedLaps).every(lap => !lap);
 
+    // Show race-wide charts if no laps are selected
     if (singleGPSelected && noLapSelected) {
         // Mostra solo i grafici race-wide (es. violin plot)
         raceWideCharts.style.display = 'block';
         individualLapCharts.style.display = 'none';
         violinPlotContainer.style.display = 'block';
         backToRaceButton.style.display = 'none';
-        d3.selectAll('.tooltip:not(.violin-tooltip)').remove();
+        d3.selectAll('.tooltip').remove(); // Remove all tooltips
         ViolinPlot.create();
         if (state.selectedDrivers.some(d => d)) {
             fetchAllLapsForRaceChart();
