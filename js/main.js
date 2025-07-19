@@ -300,13 +300,22 @@ async function handleSessionChange(event) {
     showLoading();
 
     try {
-        state.availableDrivers = await API.getDrivers(sessionKey);
+        // Fetch drivers and weather data in parallel
+        const [drivers, weatherData] = await Promise.all([
+            API.getDrivers(sessionKey),
+            API.getWeatherData(sessionKey)
+        ]);
+
+        state.availableDrivers = drivers;
         console.log('Available drivers:', state.availableDrivers);
+        console.log('Weather data:', weatherData);
 
         populateDriverSelectors();
+        updateWeatherInfo(weatherData); // Update weather info immediately
         resetLapSelector();
+
     } catch (error) {
-        console.error('Error loading drivers:', error);
+        console.error('Error during session change handling:', error);
     }
 
     hideLoading();
@@ -608,10 +617,7 @@ async function loadAllData() {
             };
         }
 
-        const weatherData = await API.getWeatherData(state.selectedSession.session_key);
-        console.log("Weather Data:", weatherData);
         console.log("State Telemetry Data:", state.telemetryData);
-        updateWeatherInfo(weatherData);
     } catch (error) {
         console.error('Error loading data:', error);
     } finally {
