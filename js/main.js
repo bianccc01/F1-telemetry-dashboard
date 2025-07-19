@@ -54,6 +54,41 @@ async function initializeApp() {
     initializeEmptySelectors();
     setupEventListeners();
     setupSidebarToggle();
+    initializeZoomManager();
+}
+
+function initializeZoomManager() {
+    if (window.ZoomManager) {
+        window.ZoomManager.addListener((transform) => {
+            // Qui puoi aggiornare TUTTI i grafici quando lo zoom cambia
+            window.chartInstances.forEach(chart => {
+                const { g, scales, id } = chart;
+                const newXScale = transform.rescaleX(scales.xScale);
+
+                g.select('.x-axis').call(d3.axisBottom(newXScale).tickFormat(d => d3.format('.0f')(d) + ' m'));
+
+                let lineGenerator;
+                switch (id) {
+                    case 'speed-chart':
+                        lineGenerator = d3.line().x(d => newXScale(d.distance)).y(d => scales.yScale(d.speed)).curve(d3.curveMonotoneX);
+                        break;
+                    case 'throttle-chart':
+                        lineGenerator = d3.line().x(d => newXScale(d.distance)).y(d => scales.yScale(d.throttle)).curve(d3.curveMonotoneX);
+                        break;
+                    case 'brake-chart':
+                        lineGenerator = d3.line().x(d => newXScale(d.distance)).y(d => scales.yScale(d.brake)).curve(d3.curveMonotoneX);
+                        break;
+                    case 'gear-chart':
+                        lineGenerator = d3.line().x(d => newXScale(d.distance)).y(d => scales.yScale(d.n_gear)).curve(d3.curveStepAfter);
+                        break;
+                }
+
+                if (lineGenerator) {
+                    g.selectAll('.line').attr('d', lineGenerator);
+                }
+            });
+        });
+    }
 }
 
 function setupSidebarToggle() {
