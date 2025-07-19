@@ -291,11 +291,29 @@ function populateSessionSelector() {
 // Handle session change
 async function handleSessionChange(event) {
     const sessionKey = event.target.value;
-    if (!sessionKey) return;
+    if (!sessionKey) {
+        // Se la sessione viene deselezionata, resetta tutto ciò che segue
+        state.selectedSession = null;
+        state.selectedDrivers = [null, null, null];
+        state.telemetryData = {};
+        state.lapsByDriver = {};
+        state.selectedLaps = {};
+
+        resetDriverSelectors();
+        resetLapSelector();
+        updateCharts(); // Aggiorna i grafici per riflettere lo stato resettato
+        return;
+    }
 
     console.log('Session selected:', sessionKey);
 
     state.selectedSession = state.availableSessions.find(s => s.session_key == sessionKey);
+
+    // Resetta i dati dei piloti e dei giri quando la sessione cambia
+    state.selectedDrivers = [null, null, null];
+    state.telemetryData = {};
+    state.lapsByDriver = {};
+    state.selectedLaps = {};
 
     showLoading();
 
@@ -313,6 +331,7 @@ async function handleSessionChange(event) {
         populateDriverSelectors();
         updateWeatherInfo(weatherData); // Update weather info immediately
         resetLapSelector();
+        updateCharts(); // Pulisce i grafici precedenti
 
     } catch (error) {
         console.error('Error during session change handling:', error);
