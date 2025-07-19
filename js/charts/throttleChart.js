@@ -36,12 +36,35 @@ window.ThrottleChart = {
         ThrottleChart.createLines(g, allData, scales);
         ThrottleChart.createLegend(g, allData, width);
 
+        // CORREZIONE: Registra questo chart nel sistema charts per il tooltip
+        if (!window.chartInstances) window.chartInstances = [];
+
+        // Pulisci le istanze precedenti per questo container
+        window.chartInstances = window.chartInstances.filter(chart =>
+            chart.container.attr('id') !== container.attr('id')
+        );
+
+        window.chartInstances.push({
+            container: container,
+            allData: allData,
+            scales: scales,
+            g: g,
+            yValue: d => d.throttle,
+            yLabel: '%',
+            yFormat: d => d3.format('.0f')(d)
+        });
+
         const zoom = d3.zoom()
             .scaleExtent([1, 10])
             .translateExtent([[0, 0], [width, height]])
             .extent([[0, 0], [width, height]])
             .on('zoom', (event) => {
                 const transform = event.transform;
+
+                if (window.ZoomManager) {
+                    window.ZoomManager.setTransform(transform);
+                }
+
                 const newXScale = transform.rescaleX(scales.xScale);
 
                 g.select('.x-axis').call(d3.axisBottom(newXScale).tickFormat(d => d3.format('.0f')(d) + ' m'));
@@ -52,10 +75,6 @@ window.ThrottleChart = {
                     .curve(d3.curveMonotoneX);
 
                 g.selectAll('.line').attr('d', lineGenerator);
-
-                if (Tooltip.moveTooltips) {
-                    Tooltip.moveTooltips(event, transform);
-                }
             });
 
         svg.call(zoom);
@@ -66,12 +85,25 @@ window.ThrottleChart = {
             .attr('height', height)
             .style('fill', 'none')
             .style('pointer-events', 'all')
-            .on('mouseover', () => Tooltip.showTooltips())
-            .on('mouseout', () => Tooltip.hideTooltips())
+            .on('mouseover', () => {
+                if (window.Tooltip && window.Tooltip.showTooltips) {
+                    window.Tooltip.showTooltips();
+                }
+            })
+            .on('mouseout', () => {
+                if (window.Tooltip && window.Tooltip.hideTooltips) {
+                    window.Tooltip.hideTooltips();
+                }
+            })
             .on('mousemove', (event) => {
-                const transform = d3.zoomTransform(svg.node());
-                Tooltip.moveTooltips(event, transform.k !== 1 ? transform : null);
+                if (window.Tooltip && window.Tooltip.moveTooltips) {
+                    window.Tooltip.moveTooltips(event);
+                }
             });
+
+        if (window.Tooltip && window.chartInstances) {
+            window.Tooltip.initialize(window.chartInstances);
+        }
     },
 
     prepareData() {

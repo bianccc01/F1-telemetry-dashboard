@@ -46,8 +46,23 @@ window.BrakeChart = {
         // Legenda
         BrakeChart.createLegend(g, allData, width);
 
-        // Tooltip (se attivato in futuro)
-        // BrakeChart.createTooltip(g, allData, scales, width, height);
+        // CORREZIONE: Registra questo chart nel sistema charts per il tooltip
+        if (!window.chartInstances) window.chartInstances = [];
+
+        // Pulisci le istanze precedenti per questo container
+        window.chartInstances = window.chartInstances.filter(chart =>
+            chart.container.attr('id') !== container.attr('id')
+        );
+
+        window.chartInstances.push({
+            container: container,
+            allData: allData,
+            scales: scales,
+            g: g,
+            yValue: d => d.brake,
+            yLabel: '%',
+            yFormat: d => d3.format('.0f')(d)
+        });
 
         const zoom = d3.zoom()
             .scaleExtent([1, 10])
@@ -55,6 +70,11 @@ window.BrakeChart = {
             .extent([[0, 0], [width, height]])
             .on('zoom', (event) => {
                 const transform = event.transform;
+
+                if (window.ZoomManager) {
+                    window.ZoomManager.setTransform(transform);
+                }
+
                 const newXScale = transform.rescaleX(scales.xScale);
 
                 g.select('.x-axis').call(d3.axisBottom(newXScale).tickFormat(d => d3.format('.0f')(d) + ' m'));
@@ -65,29 +85,35 @@ window.BrakeChart = {
                     .curve(d3.curveMonotoneX);
 
                 g.selectAll('.line').attr('d', lineGenerator);
-
-                // Aggiorna la posizione del tooltip durante lo zoom
-                if (Tooltip.moveTooltips) {
-                    Tooltip.moveTooltips(event, transform);
-                }
             });
 
         svg.call(zoom);
 
-        // Aggiungi l'overlay per il tooltip dopo aver impostato lo zoom
-        // per assicurarsi che catturi gli eventi del mouse
         g.append('rect')
             .attr('class', 'overlay')
             .attr('width', width)
             .attr('height', height)
             .style('fill', 'none')
             .style('pointer-events', 'all')
-            .on('mouseover', () => Tooltip.showTooltips())
-            .on('mouseout', () => Tooltip.hideTooltips())
+            .on('mouseover', () => {
+                if (window.Tooltip && window.Tooltip.showTooltips) {
+                    window.Tooltip.showTooltips();
+                }
+            })
+            .on('mouseout', () => {
+                if (window.Tooltip && window.Tooltip.hideTooltips) {
+                    window.Tooltip.hideTooltips();
+                }
+            })
             .on('mousemove', (event) => {
-                const transform = d3.zoomTransform(svg.node());
-                Tooltip.moveTooltips(event, transform.k !== 1 ? transform : null);
+                if (window.Tooltip && window.Tooltip.moveTooltips) {
+                    window.Tooltip.moveTooltips(event);
+                }
             });
+
+        if (window.Tooltip && window.chartInstances) {
+            window.Tooltip.initialize(window.chartInstances);
+        }
     },
 
     prepareData() {
