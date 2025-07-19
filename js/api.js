@@ -137,24 +137,23 @@ const API = {
 
         // Fetch both car data and location data
         const [carData, locationData] = await Promise.all([
-            this.fetchData('/car_data', { session_key: sessionKey, driver_number: driverNumber }),
-            this.fetchData('/location', { session_key: sessionKey, driver_number: driverNumber })
+            this.fetchData('/car_data', {
+                session_key: sessionKey,
+                driver_number: driverNumber,
+                'date>': lapStartTime.toISOString(),
+                'date<': lapEndTime.toISOString()
+            }),
+            this.fetchData('/location', {
+                session_key: sessionKey,
+                driver_number: driverNumber,
+                'date>': lapStartTime.toISOString(),
+                'date<': lapEndTime.toISOString()
+            })
         ]);
 
-        // Filter both datasets by lap time
-        const filterByTime = (data) => {
-            return data.filter(d => {
-                const pointDate = new Date(d.date);
-                return pointDate >= lapStartTime && pointDate <= lapEndTime;
-            });
-        };
-
-        const filteredCarData = filterByTime(carData);
-        const filteredLocationData = filterByTime(locationData);
-
         // Merge the two datasets
-        const mergedData = filteredCarData.map(carPoint => {
-            const locationPoint = filteredLocationData.find(locPoint =>
+        const mergedData = carData.map(carPoint => {
+            const locationPoint = locationData.find(locPoint =>
                 Math.abs(new Date(locPoint.date) - new Date(carPoint.date)) < 100 // 100ms tolerance
             );
             return {
@@ -211,7 +210,7 @@ const API = {
         );
     },
 
-     async getWeatherData(sessionKey) {
+    async getWeatherData(sessionKey) {
         if (!sessionKey) {
             console.error('Session key is required for weather forecast.');
             return null;

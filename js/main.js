@@ -536,7 +536,7 @@ async function loadAllData() {
     const driversToLoad = state.selectedDrivers.filter(d => d && state.selectedLaps[d.driver_number]);
 
     try {
-        const dataPromises = driversToLoad.map(async (driver) => {
+        for (const driver of driversToLoad) {
             const driverNumber = driver.driver_number;
             const selectedValue = state.selectedLaps[driverNumber];
             let lapNumber;
@@ -550,7 +550,7 @@ async function loadAllData() {
                 } else {
                     // Handle case where no fastest lap is found
                     console.warn(`No fastest lap found for driver ${driverNumber}`);
-                    return null; // Skip this driver
+                    continue; // Skip this driver
                 }
                 const tyreInfo = document.getElementById(`tyre-info-${driverNumber}`);
                 tyreInfo.innerHTML = `Fastest: Lap ${lapNumber}`;
@@ -573,28 +573,16 @@ async function loadAllData() {
                 tyreInfo.innerHTML += ` | Compound: ${lapInfo.compound}`;
             }
 
-            return {
-                driverNumber,
-                data: {
-                    data: carData,
-                    driver: driver,
-                    color: driver.color,
-                    sectorTimes: sectorTimes,
-                }
+            state.telemetryData[driverNumber] = {
+                data: carData,
+                driver: driver,
+                color: driver.color,
+                sectorTimes: sectorTimes,
             };
-        });
+        }
 
-        const [results, weatherData] = await Promise.all([
-            Promise.all(dataPromises),
-            API.getWeatherData(state.selectedSession.session_key)
-        ]);
+        const weatherData = await API.getWeatherData(state.selectedSession.session_key);
         console.log("Weather Data:", weatherData);
-        console.log("API Results:", results);
-        results.forEach(result => {
-            if (result) { // Check if the result is not null
-                state.telemetryData[result.driverNumber] = result.data;
-            }
-        });
         console.log("State Telemetry Data:", state.telemetryData);
         updateWeatherInfo(weatherData);
     } catch (error) {
