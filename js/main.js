@@ -15,6 +15,7 @@ const state = {
     telemetryData: {}, // Now stores telemetry data keyed by driver number
     lapsByDriver: {},   // Stores available laps for each driver
     selectedLaps: {},   // { driverNumber: 'fastest' or lapNumber }
+    dataLoaded: false,
 
     // Colors for the 4 driver slots
     slotColors: ['#4477AA', '#EE6677', '#228833', '#CCBB44']
@@ -573,6 +574,8 @@ function handleLapChange(event) {
 function handleBackToRace() {
     // Deseleziona tutti i giri
     state.selectedLaps = {};
+    state.dataLoaded = false;
+
 
     // Resetta i selettori dei giri
     updateLapSelectors();
@@ -593,6 +596,8 @@ async function loadAllData() {
     showLoading();
     clearCharts();
     state.telemetryData = {};
+    state.dataLoaded = true;
+
 
     const driversToLoad = state.selectedDrivers.filter(d => d && state.selectedLaps[d.driver_number]);
 
@@ -725,32 +730,30 @@ function updateCharts() {
     const backToRaceButton = document.getElementById('back-to-race-button');
 
     const singleGPSelected = state.selectedGP;
-    const driverCount = state.selectedDrivers.filter(d => d).length;
     const noLapSelected = Object.values(state.selectedLaps).every(lap => !lap);
 
-    // Show race-wide charts if no laps are selected
-    if (singleGPSelected && noLapSelected) {
-        // Mostra solo i grafici race-wide (es. violin plot)
+    // Show race-wide charts if no laps are selected OR if data has not been loaded yet
+    if (singleGPSelected && (noLapSelected || !state.dataLoaded)) {
         raceWideCharts.style.display = 'block';
         individualLapCharts.style.display = 'none';
         violinPlotContainer.style.display = 'block';
         backToRaceButton.style.display = 'none';
-        d3.selectAll('.tooltip').remove(); // Remove all tooltips
+        d3.selectAll('.tooltip').remove();
         ViolinPlot.create();
         if (state.selectedDrivers.some(d => d)) {
             fetchAllLapsForRaceChart();
         } else {
             RaceChart.create({});
         }
-    } else {
-        // Mostra solo i grafici dei singoli giri
+    } else if (state.dataLoaded) {
+        // Show individual lap charts only if data is loaded
         raceWideCharts.style.display = 'none';
         individualLapCharts.style.display = 'block';
         violinPlotContainer.style.display = 'none';
         backToRaceButton.style.display = 'block';
         d3.selectAll('.tooltip').remove();
-
     }
+
 
     SpeedChart.create(state.telemetryData);
     ThrottleChart.create(state.telemetryData);
