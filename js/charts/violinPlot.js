@@ -111,7 +111,7 @@ window.ViolinPlot = {
             .value(d => d);
 
         const tooltip = d3.select("body").append("div")
-            .attr("class", "tooltip")
+            .attr("class", "tooltip violin-tooltip")
             .style("opacity", 0);
 
         allData.forEach(driverData => {

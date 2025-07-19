@@ -57,7 +57,7 @@ window.Tooltip = {
     },
 
     hideTooltips() {
-        d3.selectAll('.tooltip').style('opacity', 0);
+        d3.selectAll('.tooltip:not(.violin-tooltip)').style('opacity', 0);
         d3.selectAll('.tooltip-line').style('opacity', 0);
     },
 
