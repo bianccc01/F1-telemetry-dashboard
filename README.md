@@ -20,7 +20,7 @@ This project is an interactive web-based dashboard for visualizing Formula 1 tel
 
 ## How to Use
 
-1.  **Open `index.html` in your web browser.**
+1.  **Open `index.html` in your web browser or click [here](https://bianccc01.github.io/Infoviz-f1-telemetry-dashboard/).**
 2.  **Select a Year:** Use the dropdown menu in the sidebar to choose a year.
 3.  **Select a Grand Prix:** Once a year is selected, the Grand Prix dropdown will be populated. Choose a Grand Prix to continue.
 4.  **Select a Session:** After selecting a Grand Prix, choose a session (e.g., Race, Qualifying, Practice).
