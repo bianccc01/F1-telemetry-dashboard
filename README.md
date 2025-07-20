@@ -20,7 +20,7 @@ This project is an interactive web-based dashboard for visualizing Formula 1 tel
 
 ## How to Use
 
-1.  **Open `index.html` in your web browser.**
+1.  **Open `index.html` in your web browser or click [here](https://bianccc01.github.io/Infoviz-f1-telemetry-dashboard/).**
 2.  **Select a Year:** Use the dropdown menu in the sidebar to choose a year.
 3.  **Select a Grand Prix:** Once a year is selected, the Grand Prix dropdown will be populated. Choose a Grand Prix to continue.
 4.  **Select a Session:** After selecting a Grand Prix, choose a session (e.g., Race, Qualifying, Practice).
@@ -74,7 +74,3 @@ All the data used in this project is provided by the [Open F1 API](https://openf
 *   **Implement a live session mode:** To visualize telemetry data in real-time.
 *   **Improve the user interface:** With more advanced filtering and comparison options.
 *   **Add driver and team statistics:** To provide more context to the data.
-
-## License
-
-This project is licensed under the MIT License. See the `LICENSE` file for details.
