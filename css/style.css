@@ -344,7 +344,6 @@ select option {
     position: relative;
     background: rgba(0, 0, 0, 0.4);
     border-radius: 8px;
-    overflow: hidden;
 }
 
 .spinner-container {
