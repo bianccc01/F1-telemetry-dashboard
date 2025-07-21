@@ -234,6 +234,10 @@ function initializeEmptySelectors() {
     chartsContainer.addEventListener('scroll', () => {
         trackMapSidebar.style.top = `${-chartsContainer.scrollTop}px`;
     });
+
+    window.addEventListener('resize', () => {
+        updateCharts();
+    });
 }
 
 // Setup event listeners
