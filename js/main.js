@@ -175,13 +175,13 @@ function debugChartInstances() {
 
 function setupSidebarToggle() {
     const toggleButton = document.getElementById('toggle-sidebar-button');
-    const mainContainer = document.querySelector('.main-container');
+    const sidebarColumn = document.querySelector('.column:first-child');
 
     toggleButton.addEventListener('click', () => {
-        mainContainer.classList.toggle('sidebar-hidden');
+        sidebarColumn.classList.toggle('sidebar-hidden');
 
         // Change button text based on state
-        if (mainContainer.classList.contains('sidebar-hidden')) {
+        if (sidebarColumn.classList.contains('sidebar-hidden')) {
             toggleButton.textContent = '▶';
         } else {
             toggleButton.textContent = '◀';
