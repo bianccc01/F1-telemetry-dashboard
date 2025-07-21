@@ -61,35 +61,116 @@ async function initializeApp() {
 function initializeZoomManager() {
     if (window.ZoomManager) {
         window.ZoomManager.addListener((transform) => {
+            // Add defensive check for chartInstances
+            if (!window.chartInstances || !Array.isArray(window.chartInstances)) {
+                console.warn("⚠️ ZoomManager: chartInstances not available or not an array");
+                return;
+            }
+
+            console.log(`🔄 ZoomManager: Updating ${window.chartInstances.length} chart instances`);
+
             // Qui puoi aggiornare TUTTI i grafici quando lo zoom cambia
-            window.chartInstances.forEach(chart => {
-                const { g, scales, id } = chart;
-                const newXScale = transform.rescaleX(scales.xScale);
+            window.chartInstances.forEach((chart, index) => {
+                try {
+                    // Add validation for chart structure
+                    if (!chart || !chart.g || !chart.scales || !chart.id) {
+                        console.warn(`⚠️ ZoomManager: Invalid chart instance at index ${index}`, chart);
+                        return;
+                    }
 
-                g.select('.x-axis').call(d3.axisBottom(newXScale).tickFormat(d => d3.format('.0f')(d) + ' m'));
+                    const { g, scales, id } = chart;
 
-                let lineGenerator;
-                switch (id) {
-                    case 'speed-chart':
-                        lineGenerator = d3.line().x(d => newXScale(d.distance)).y(d => scales.yScale(d.speed)).curve(d3.curveMonotoneX);
-                        break;
-                    case 'throttle-chart':
-                        lineGenerator = d3.line().x(d => newXScale(d.distance)).y(d => scales.yScale(d.throttle)).curve(d3.curveMonotoneX);
-                        break;
-                    case 'brake-chart':
-                        lineGenerator = d3.line().x(d => newXScale(d.distance)).y(d => scales.yScale(d.brake)).curve(d3.curveMonotoneX);
-                        break;
-                    case 'gear-chart':
-                        lineGenerator = d3.line().x(d => newXScale(d.distance)).y(d => scales.yScale(d.n_gear)).curve(d3.curveStepAfter);
-                        break;
-                }
+                    // Check if scales.xScale exists
+                    if (!scales.xScale) {
+                        console.warn(`⚠️ ZoomManager: Missing xScale for chart ${id}`);
+                        return;
+                    }
 
-                if (lineGenerator) {
-                    g.selectAll('.line').attr('d', lineGenerator);
+                    const newXScale = transform.rescaleX(scales.xScale);
+
+                    // Update x-axis
+                    const xAxisSelection = g.select('.x-axis');
+                    if (!xAxisSelection.empty()) {
+                        xAxisSelection.call(d3.axisBottom(newXScale).tickFormat(d => d3.format('.0f')(d) + ' m'));
+                    }
+
+                    let lineGenerator;
+                    switch (id) {
+                        case 'speed-chart':
+                            lineGenerator = d3.line()
+                                .x(d => newXScale(d.distance))
+                                .y(d => scales.yScale(d.speed))
+                                .curve(d3.curveMonotoneX);
+                            break;
+                        case 'throttle-chart':
+                            lineGenerator = d3.line()
+                                .x(d => newXScale(d.distance))
+                                .y(d => scales.yScale(d.throttle))
+                                .curve(d3.curveMonotoneX);
+                            break;
+                        case 'brake-chart':
+                            lineGenerator = d3.line()
+                                .x(d => newXScale(d.distance))
+                                .y(d => scales.yScale(d.brake))
+                                .curve(d3.curveMonotoneX);
+                            break;
+                        case 'gear-chart':
+                            lineGenerator = d3.line()
+                                .x(d => newXScale(d.distance))
+                                .y(d => scales.yScale(d.n_gear))
+                                .curve(d3.curveStepAfter);
+                            break;
+                        default:
+                            console.warn(`⚠️ ZoomManager: Unknown chart type ${id}`);
+                            return;
+                    }
+
+                    if (lineGenerator) {
+                        const lineSelection = g.selectAll('.line');
+                        if (!lineSelection.empty()) {
+                            lineSelection.attr('d', lineGenerator);
+                        } else {
+                            console.warn(`⚠️ ZoomManager: No .line elements found for chart ${id}`);
+                        }
+                    }
+
+                    console.log(`✅ ZoomManager: Updated chart ${id}`);
+
+                } catch (error) {
+                    console.error(`❌ ZoomManager: Error updating chart at index ${index}:`, error);
+                    console.error("Chart object:", chart);
                 }
             });
         });
+
+        console.log("✅ ZoomManager: Listener initialized successfully");
+    } else {
+        console.warn("⚠️ ZoomManager not available");
     }
+}
+
+// Alternative approach: Initialize chartInstances if it doesn't exist
+function ensureChartInstances() {
+    if (!window.chartInstances) {
+        window.chartInstances = [];
+        console.log("🔧 Initialized empty chartInstances array");
+    }
+}
+
+// Call this before initializeZoomManager
+function safeInitializeZoomManager() {
+    ensureChartInstances();
+    initializeZoomManager();
+}
+
+// Additional helper function to debug chartInstances
+function debugChartInstances() {
+    console.log("🔍 Chart Instances Debug:");
+    console.log("- Exists:", !!window.chartInstances);
+    console.log("- Type:", typeof window.chartInstances);
+    console.log("- Is Array:", Array.isArray(window.chartInstances));
+    console.log("- Length:", window.chartInstances?.length || 0);
+    console.log("- Content:", window.chartInstances);
 }
 
 function setupSidebarToggle() {
@@ -192,6 +273,9 @@ async function handleYearChange(event) {
     state.selectedGP = null;
     state.selectedSession = null;
     state.selectedDrivers = [null, null, null];
+
+    // Show the track map sidebar
+    document.querySelector('.track-map-sidebar').classList.remove('hidden-by-default');
 
     showLoading();
 
@@ -310,6 +394,10 @@ async function handleSessionChange(event) {
     console.log('Session selected:', sessionKey);
 
     state.selectedSession = state.availableSessions.find(s => s.session_key == sessionKey);
+
+    // Show the charts container
+    document.querySelector('.charts-container').classList.remove('hidden-by-default');
+
 
     // Resetta i dati dei piloti e dei giri quando la sessione cambia
     state.selectedDrivers = [null, null, null];
@@ -785,23 +873,33 @@ function updateCharts() {
     const singleGPSelected = state.selectedGP;
     const noLapSelected = Object.values(state.selectedLaps).every(lap => !lap);
 
+    // Condizione per mostrare i grafici "race-wide"
+    const showRaceWideCharts = state.selectedSession &&
+        (state.selectedSession.session_name === 'Race' || state.selectedSession.session_name === 'Sprint');
+
     // Show race-wide charts if no laps are selected OR if data has not been loaded yet
     if (singleGPSelected && (noLapSelected || !state.dataLoaded)) {
-        raceWideCharts.style.display = 'block';
+        if (showRaceWideCharts) {
+            raceWideCharts.style.display = 'block';
+            violinPlotContainer.style.display = 'block';
+            ViolinPlot.create();
+            if (state.selectedDrivers.some(d => d)) {
+                fetchAllLapsForRaceChart().then(() => {
+                    if (RaceChart.initializeTooltip) {
+                        RaceChart.initializeTooltip();
+                    }
+                });
+            } else {
+                RaceChart.create({});
+            }
+        } else {
+            raceWideCharts.style.display = 'none';
+            violinPlotContainer.style.display = 'none';
+        }
         individualLapCharts.style.display = 'none';
-        violinPlotContainer.style.display = 'block';
         backToRaceButton.style.display = 'none';
         d3.selectAll('.tooltip').remove();
-        ViolinPlot.create();
-        if (state.selectedDrivers.some(d => d)) {
-            fetchAllLapsForRaceChart().then(() => {
-                if (RaceChart.initializeTooltip) {
-                    RaceChart.initializeTooltip();
-                }
-            });
-        } else {
-            RaceChart.create({});
-        }
+
     } else if (state.dataLoaded) {
         // Show individual lap charts only if data is loaded
         raceWideCharts.style.display = 'none';

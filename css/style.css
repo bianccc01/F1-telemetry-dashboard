@@ -546,3 +546,7 @@ select option {
 .tooltip-line {
     pointer-events: none !important;
 }
+
+.hidden-by-default {
+    display: none !important;
+}
