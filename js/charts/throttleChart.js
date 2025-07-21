@@ -36,7 +36,6 @@ window.ThrottleChart = {
         ThrottleChart.createLines(g, allData, scales);
         ThrottleChart.createLegend(g, allData, width);
 
-        // CORREZIONE: Registra questo chart nel sistema charts per il tooltip
         if (!window.chartInstances) window.chartInstances = [];
 
         // Pulisci le istanze precedenti per questo container
@@ -108,7 +107,7 @@ window.ThrottleChart = {
 
     prepareData() {
         const allData = [];
-        const drivers = Object.keys(state.telemetryData || {}); // Ensure telemetryData is an object
+        const drivers = Object.keys(state.telemetryData || {}); 
 
         drivers.forEach(driverNumber => {
             const driverData = state.telemetryData[driverNumber];

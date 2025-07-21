@@ -10,7 +10,7 @@ window.SpeedChart = {
 
     create() {
         const container = d3.select('#speed-chart');
-        container.selectAll('*').remove(); // Clear existing chart
+        container.selectAll('*').remove(); 
 
         if (!state.telemetryData || Object.keys(state.telemetryData).length === 0) {
             container.append('div')
@@ -55,7 +55,6 @@ window.SpeedChart = {
         // Legenda
         this.createLegend(g, allData, width);
 
-        // CORREZIONE: Registra questo chart nel sistema charts per il tooltip
         if (!window.chartInstances) window.chartInstances = [];
 
         // Pulisci le istanze precedenti per questo container
@@ -82,7 +81,6 @@ window.SpeedChart = {
             .on('zoom', (event) => {
                 const transform = event.transform;
 
-                // AGGIUNTO: Aggiorna il ZoomManager con il nuovo transform
                 if (window.ZoomManager) {
                     window.ZoomManager.setTransform(transform);
                 }
@@ -101,7 +99,6 @@ window.SpeedChart = {
 
         svg.call(zoom);
 
-        // MODIFICATO: Overlay semplificato senza passare il transform
         g.append('rect')
             .attr('class', 'overlay')
             .attr('width', width)
@@ -125,7 +122,6 @@ window.SpeedChart = {
                 }
             });
 
-        // AGGIUNTO: Inizializza il tooltip con i chart registrati
         if (window.Tooltip && window.chartInstances) {
             window.Tooltip.initialize(window.chartInstances);
         }
