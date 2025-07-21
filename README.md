@@ -1,158 +1,130 @@
-# F1 Telemetry Visualization Dashboard
+# 🏎️ F1 Telemetry Visualization Dashboard
 
-This project is an interactive web-based dashboard for visualizing Formula 1 telemetry data. It allows users to explore and compare lap data from different drivers, sessions, and Grand Prix events. The dashboard is built using D3.js for data visualization and fetches data from the Open F1 API.
+[![Live Demo](https://img.shields.io/badge/🚀-Live%20Demo-blue?style=for-the-badge)](https://bianccc01.github.io/Infoviz-f1-telemetry-dashboard/)
+[![Data Source](https://img.shields.io/badge/📊-Open%20F1%20API-orange?style=for-the-badge)](https://openf1.org/)
 
-## Features
+> An interactive web-based dashboard for visualizing and analyzing Formula 1 telemetry data with real-time comparison capabilities across drivers, sessions, and Grand Prix events.
 
-*   **Interactive Data Exploration:** Select specific years, Grand Prix, sessions, and up to three drivers to compare their performance.
-*   **Detailed Lap Telemetry:** Visualize key telemetry data for a selected lap, including:
-    *   Speed (km/h)
-    *   Throttle (%)
-    *   Brake (%)
-    *   Gear
-*   **Race-Wide Analysis:**
-    *   **Race Chart:** A comprehensive overview of the entire race, showing lap times for selected drivers.
-    *   **Violin Plot:** A distribution of lap times for a selected driver, providing insights into their consistency.
-*   **Track Map:** A visual representation of the circuit, with car markers showing the positions of the selected drivers.
-*   **Weather Information:** View the weather conditions for the selected session.
-*   **Driver Information:** See details about the selected drivers, including their team and the tyre compound used for a specific lap.
-*   **Responsive Design:** The dashboard is designed to work on different screen sizes.
+## 🌟 Features
 
-## How to Use
+### 🔍 **Interactive Data Exploration**
+- **Multi-dimensional Selection**: Choose specific years, Grand Prix, sessions, and compare up to 3 drivers simultaneously
+- **Real-time Data Fetching**: Live data from the Open F1 API for the most up-to-date race information
+- **Responsive Design**: Optimized for desktop, tablet, and mobile viewing
 
-1.  **Open `index.html` in your web browser or click [here](https://bianccc01.github.io/Infoviz-f1-telemetry-dashboard/).**
-2.  **Select a Year:** Use the dropdown menu in the sidebar to choose a year.
-3.  **Select a Grand Prix:** Once a year is selected, the Grand Prix dropdown will be populated. Choose a Grand Prix to continue.
-4.  **Select a Session:** After selecting a Grand Prix, choose a session (e.g., Race, Qualifying, Practice).
-5.  **Select Drivers:** You can select up to three drivers to compare. The driver selection dropdowns will become active sequentially.
-6.  **Load Data:** Once you have selected a lap for each driver, click the "Load Data" button to view the telemetry charts.
-7.  **Explore the Charts:**
-    *   Use the main chart area to view the detailed telemetry data for the selected laps.
-    *   Hover over the charts to see tooltips with specific data points.
-    *   Click on a lap in the Race Chart to load the telemetry data for that specific lap.
-    *   Use the "Back to Race View" button to return to the race-wide charts.
+### 📊 **Advanced Telemetry Analysis**
+- **Speed Analysis**: Track speed variations (km/h) throughout the lap with precision
+- **Throttle Monitoring**: Analyze throttle application percentage and driving techniques
+- **Brake Performance**: Study braking points, pressure, and techniques
+- **Gear Optimization**: Visualize gear shifting patterns and transmission strategies
 
-## Charts
+### 🏁 **Race Intelligence Features**
+- **Race Chart**: Comprehensive race overview with lap-by-lap performance analysis
+- **Violin Plot**: Statistical distribution of lap times revealing driver consistency
+- **Tyre Strategy Visualization**: Color-coded tyre compound analysis (Soft, Medium, Hard, Intermediate, Wet)
+- **Track Map**: Real-time circuit visualization with driver position markers
 
-This section provides a detailed explanation of each chart available on the dashboard.
+### 🌤️ **Contextual Information**
+- **Weather Integration**: Session weather conditions and their impact on performance
+- **Driver Profiles**: Team information and detailed driver statistics
+- **Interactive Tooltips**: Hover for detailed data points and insights
 
-### Race Chart
+## 🚀 Quick Start
 
-The Race Chart provides a comprehensive overview of the entire race for the selected drivers. It plots the lap times for each driver against the lap number.
+### **Option 1: Live Demo** 
+Click [here](https://bianccc01.github.io/Infoviz-f1-telemetry-dashboard/) to access the live dashboard immediately.
 
-**Features:**
+### **Option 2: Local Setup**
+1. **Clone the Repository**
+   ```bash
+   git clone https://github.com/bianccc01/Infoviz-f1-telemetry-dashboard.git
+   cd Infoviz-f1-telemetry-dashboard
+   ```
 
-*   **Lap Times:** Each point on the chart represents a lap, with the y-axis showing the lap time and the x-axis showing the lap number.
-*   **Driver Comparison:** The chart displays data for up to three drivers, each represented by a different color.
-*   **Tyre Compound:** The color of each point indicates the tyre compound used for that lap (Soft, Medium, Hard, Intermediate, or Wet).
-*   **Interactive Tooltip:** Hovering over a point reveals a tooltip with detailed information, including the driver's name, lap number, lap time, and an image of the tyre compound.
-*   **Lap Selection:** Clicking on a point in the Race Chart will load the detailed telemetry data for that specific lap in the individual lap charts.
-*   **Zoom and Pan:** You can zoom in on specific sections of the race and pan horizontally to explore the data in more detail.
+2. **Launch the Application**
+   ```bash
+   # Simple HTTP server (Python 3)
+   python -m http.server 8000
+   
+   # Or using Node.js
+   npx http-server
+   
+   # Or simply open index.html in your browser
+   open index.html
+   ```
 
+## 📋 User Guide
 
-### Violin Plot
+### **Step-by-Step Workflow**
 
-The Violin Plot provides a visual representation of the distribution of lap times for each selected driver, offering insights into their consistency.
+1. **🗓️ Select Year**: Choose from available Formula 1 seasons
+2. **🏁 Choose Grand Prix**: Pick from the race calendar for your selected year  
+3. **⏱️ Pick Session**: Select from Race, Qualifying, or Practice sessions
+4. **👥 Select Drivers**: Choose up to 3 drivers for comparative analysis
+5. **📊 Load & Analyze**: Click "Load Data" to generate visualizations
+6. **🔍 Explore**: Interactive charts with zoom, pan, and detailed tooltips
 
-**Features:**
+### **Navigation Tips**
+- **Race Chart Interaction**: Click any lap point to dive into detailed telemetry
+- **Zoom Controls**: Use mouse wheel or pinch gestures for detailed analysis
+- **Back Navigation**: Use "Back to Race View" to return to overview charts
+- **Multi-Driver Comparison**: Toggle driver visibility for focused analysis
 
-*   **Lap Time Distribution:** The width of the violin shape represents the density of lap times at that particular value. A wider section indicates a higher concentration of lap times.
-*   **Median and Interquartile Range:** The chart displays the median lap time (as a white dot) and the interquartile range (as a black bar), which represents the middle 50% of the data.
-*   **Driver Comparison:** The chart displays violin plots for each selected driver, allowing for a direct comparison of their consistency.
-*   **Interactive Tooltip:** Hovering over a violin plot reveals a tooltip with the driver's name, median lap time, and interquartile range.
+## 📊 Chart Reference
 
+| Chart Type | Purpose | Key Features |
+|------------|---------|--------------|
+| **🏁 Race Chart** | Full race performance overview | Lap times, tyre strategies, clickable lap selection |
+| **🎻 Violin Plot** | Lap time consistency analysis | Statistical distribution, median indicators, consistency metrics |
+| **⚡ Speed Chart** | Velocity analysis per lap | Speed profiles, acceleration zones, comparative analysis |
+| **🚗 Throttle Chart** | Throttle application patterns | Acceleration techniques, corner exit analysis |
+| **🛑 Brake Chart** | Braking performance analysis | Braking points, pressure application, technique comparison |
+| **⚙️ Gear Chart** | Transmission strategy | Gear shifting patterns, optimization analysis |
+| **🗺️ Track Map** | Circuit visualization | Real-time positioning, weather integration |
 
-### Speed Chart
-
-The Speed Chart displays the speed of the car in km/h over the distance of a single lap.
-
-**Features:**
-
-*   **Speed Profile:** The chart shows how the driver's speed changes throughout the lap, highlighting acceleration and deceleration zones.
-*   **Driver Comparison:** The chart can display data for up to three drivers, allowing for a direct comparison of their speed profiles.
-*   **Interactive Tooltip:** Hovering over the chart reveals a tooltip with the exact speed of each driver at that specific distance.
-*   **Zoom and Pan:** You can zoom in on specific sections of the lap and pan horizontally to explore the data in more detail.
-
-
-### Throttle Chart
-
-The Throttle Chart displays the percentage of throttle application over the distance of a single lap.
-
-**Features:**
-
-*   **Throttle Application:** The chart shows when and how much the driver is applying the throttle, from 0% (coasting) to 100% (full throttle).
-*   **Driver Comparison:** The chart can display data for up to three drivers, allowing for a direct comparison of their throttle application strategies.
-*   **Interactive Tooltip:** Hovering over the chart reveals a tooltip with the exact throttle percentage of each driver at that specific distance.
-*   **Zoom and Pan:** You can zoom in on specific sections of the lap and pan horizontally to explore the data in more detail.
-
-
-### Brake Chart
-
-The Brake Chart displays the percentage of brake application over the distance of a single lap.
-
-**Features:**
-
-*   **Brake Application:** The chart shows when and how much the driver is applying the brakes, from 0% to 100%.
-*   **Driver Comparison:** The chart can display data for up to three drivers, allowing for a direct comparison of their braking points and techniques.
-*   **Interactive Tooltip:** Hovering over the chart reveals a tooltip with the exact brake percentage of each driver at that specific distance.
-*   **Zoom and Pan:** You can zoom in on specific sections of the lap and pan horizontally to explore the data in more detail.
-
-
-### Gear Chart
-
-The Gear Chart displays the gear number used by the driver over the distance of a single lap.
-
-**Features:**
-
-*   **Gear Shifting:** The chart shows the gear shifting pattern of the driver throughout the lap, from 1st to 8th gear.
-*   **Driver Comparison:** The chart can display data for up to three drivers, allowing for a direct comparison of their gear shifting strategies.
-*   **Interactive Tooltip:** Hovering over the chart reveals a tooltip with the exact gear number of each driver at that specific distance.
-*   **Zoom and Pan:** You can zoom in on specific sections of the lap and pan horizontally to explore the data in more detail.
-
-
-### Track Map
-
-The Track Map provides a visual representation of the circuit and the positions of the selected drivers.
-
-**Features:**
-
-*   **Circuit Layout:** The map displays the layout of the track for the selected Grand Prix.
-*   **Driver Positions:** The map shows the positions of the selected drivers on the track for the selected lap. Each driver is represented by a colored marker.
-*   **Weather Information:** The sidebar next to the track map displays the weather conditions for the selected session.
-*   **Driver Information:** The sidebar also displays information about the selected drivers, including their team and the tyre compound used for the selected lap.
-
-
-## Project Structure
+## 🏗️ Technical Architecture
 
 ```
-.
-├── css/
-│   └── style.css         # Main stylesheet
-├── js/
-│   ├── api.js            # Handles communication with the Open F1 API
-│   ├── main.js           # Main application logic
-│   ├── telemetry.js      # Telemetry-related functions
-│   └── charts/
-│       ├── brakeChart.js
-│       ├── gearChart.js
-│       ├── raceChart.js
-│       ├── speedChart.js
-│       ├── throttleChart.js
-│       ├── tooltip.js
-│       ├── trackMap.js
-│       ├── violinPlot.js
-│       └── zoomManager.js
-├── index.html            # Main HTML file
-└── README.md             # This file
+📁 Project Structure
+├── 🎨 css/
+│   └── style.css              # Responsive styling & themes
+├── ⚡ js/
+│   ├── api.js                 # Open F1 API integration
+│   ├── main.js                # Core application logic
+│   ├── telemetry.js           # Telemetry data processing
+│   └── 📊 charts/
+│       ├── brakeChart.js      # Brake analysis visualization
+│       ├── gearChart.js       # Gear pattern charts
+│       ├── raceChart.js       # Race overview visualization  
+│       ├── speedChart.js      # Speed profile charts
+│       ├── throttleChart.js   # Throttle analysis
+│       ├── tooltip.js         # Interactive tooltip system
+│       ├── trackMap.js        # Circuit mapping & positioning
+│       ├── violinPlot.js      # Statistical distribution plots
+│       └── zoomManager.js     # Chart interaction management
+├── 🌐 index.html              # Main application interface
+└── 📖 README.md               # Documentation
 ```
 
-## Data Source
+### **Technology Stack**
+- **Frontend**: HTML5, CSS3, JavaScript
+- **Visualization**: D3.js for advanced data visualization
+- **Data Source**: Open F1 API for real-time telemetry
 
-All the data used in this project is provided by the [Open F1 API](https://openf1.org/).
+## 📡 Data Source
 
-## Contacts
+This project leverages the comprehensive [**Open F1 API**](https://openf1.org/) which provides:
+- Real-time telemetry data
+- Historical race information
+- Driver and team statistics  
+- Weather and track conditions
+- Tyre strategy data
 
-Gabriel Pentimalli ([@GabrielPentimalli](https://github.com/GabrielPentimalli)) - gab.pentimalli@stud.uniroma3.it
+## 👨‍💻 Authors
 
-Giorgio Biancini ([@bianccc01](https://github.com/bianccc01)) - gio.biancini@stud.uniroma3.it
+| Developer | Contact |
+|-----------|---------|
+| **Giorgio Biancini** | [GitHub](https://github.com/bianccc01) • [Email](mailto:gio.biancini@stud.uniroma3.it) |
+| **Gabriel Pentimalli** | [GitHub](https://github.com/GabrielPentimalli) • [Email](mailto:gab.pentimalli@stud.uniroma3.it) |
 
+---
