@@ -49,7 +49,6 @@ The Race Chart provides a comprehensive overview of the entire race for the sele
 *   **Lap Selection:** Clicking on a point in the Race Chart will load the detailed telemetry data for that specific lap in the individual lap charts.
 *   **Zoom and Pan:** You can zoom in on specific sections of the race and pan horizontally to explore the data in more detail.
 
-![Race Chart](httpshttps://i.imgur.com/example-race-chart.png)
 
 ### Violin Plot
 
@@ -62,7 +61,6 @@ The Violin Plot provides a visual representation of the distribution of lap time
 *   **Driver Comparison:** The chart displays violin plots for each selected driver, allowing for a direct comparison of their consistency.
 *   **Interactive Tooltip:** Hovering over a violin plot reveals a tooltip with the driver's name, median lap time, and interquartile range.
 
-![Violin Plot](https://i.imgur.com/example-violin-plot.png)
 
 ### Speed Chart
 
@@ -75,7 +73,6 @@ The Speed Chart displays the speed of the car in km/h over the distance of a sin
 *   **Interactive Tooltip:** Hovering over the chart reveals a tooltip with the exact speed of each driver at that specific distance.
 *   **Zoom and Pan:** You can zoom in on specific sections of the lap and pan horizontally to explore the data in more detail.
 
-![Speed Chart](https://i.imgur.com/example-speed-chart.png)
 
 ### Throttle Chart
 
@@ -88,7 +85,6 @@ The Throttle Chart displays the percentage of throttle application over the dist
 *   **Interactive Tooltip:** Hovering over the chart reveals a tooltip with the exact throttle percentage of each driver at that specific distance.
 *   **Zoom and Pan:** You can zoom in on specific sections of the lap and pan horizontally to explore the data in more detail.
 
-![Throttle Chart](https://i.imgur.com/example-throttle-chart.png)
 
 ### Brake Chart
 
@@ -101,7 +97,6 @@ The Brake Chart displays the percentage of brake application over the distance o
 *   **Interactive Tooltip:** Hovering over the chart reveals a tooltip with the exact brake percentage of each driver at that specific distance.
 *   **Zoom and Pan:** You can zoom in on specific sections of the lap and pan horizontally to explore the data in more detail.
 
-![Brake Chart](https://i.imgur.com/example-brake-chart.png)
 
 ### Gear Chart
 
@@ -114,7 +109,6 @@ The Gear Chart displays the gear number used by the driver over the distance of 
 *   **Interactive Tooltip:** Hovering over the chart reveals a tooltip with the exact gear number of each driver at that specific distance.
 *   **Zoom and Pan:** You can zoom in on specific sections of the lap and pan horizontally to explore the data in more detail.
 
-![Gear Chart](https://i.imgur.com/example-gear-chart.png)
 
 ### Track Map
 
@@ -127,7 +121,6 @@ The Track Map provides a visual representation of the circuit and the positions 
 *   **Weather Information:** The sidebar next to the track map displays the weather conditions for the selected session.
 *   **Driver Information:** The sidebar also displays information about the selected drivers, including their team and the tyre compound used for the selected lap.
 
-![Track Map](https://i.imgur.com/example-track-map.png)
 
 ## Project Structure
 
@@ -153,13 +146,13 @@ The Track Map provides a visual representation of the circuit and the positions 
 └── README.md             # This file
 ```
 
-## Future Improvements
-
-*   **Add more telemetry channels:** Such as RPM, DRS status, and energy recovery systems (ERS).
-*   **Implement a live session mode:** To visualize telemetry data in real-time.
-*   **Improve the user interface:** With more advanced filtering and comparison options.
-*   **Add driver and team statistics:** To provide more context to the data.
-
 ## Data Source
 
 All the data used in this project is provided by the [Open F1 API](https://openf1.org/).
+
+## Contacts
+
+Gabriel Pentimalli ([@GabrielPentimalli](https://github.com/GabrielPentimalli)) - gab.pentimalli@stud.uniroma3.it
+
+Giorgio Biancini ([@bianccc01](https://github.com/bianccc01)) - gio.biancini@stud.uniroma3.it
+
