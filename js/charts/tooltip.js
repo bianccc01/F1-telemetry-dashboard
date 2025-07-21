@@ -85,7 +85,6 @@ window.Tooltip = {
     },
 
     showTooltips() {
-        // Mostra SOLO i tooltip di telemetria
         d3.selectAll('.tooltip.telemetry-tooltip').style('opacity', 1);
         d3.selectAll('.tooltip-line').style('opacity', 1);
     },
@@ -101,7 +100,7 @@ window.Tooltip = {
         const mainChart = this.charts[0];
         if (!mainChart || !mainChart.scales) return;
 
-        // CORREZIONE PRINCIPALE: Ottieni sempre il transform corrente dal ZoomManager
+        // Ottieni sempre il transform corrente dal ZoomManager
         const currentTransform = window.ZoomManager ? window.ZoomManager.getTransform() : d3.zoomIdentity;
         const isZoomed = currentTransform.k !== 1;
 
@@ -162,7 +161,7 @@ window.Tooltip = {
                     .attr('y1', 0)
                     .attr('y2', scales.yScale.range()[0]);
 
-                // CORREZIONE: Usa la posizione del mouse del pointer invece di calcolare da lineX
+                // Usa la posizione del mouse del pointer invece di calcolare da lineX
                 const svgRect = g.node().ownerSVGElement.getBoundingClientRect();
                 const gRect = g.node().getBoundingClientRect();
 
@@ -184,7 +183,6 @@ window.Tooltip = {
         }
     },
 
-    // AGGIUNTO: Metodo di cleanup per i tooltip di telemetria
     cleanup() {
         console.log("🧹 Tooltip: Cleaning up telemetry tooltips...");
         d3.selectAll('.tooltip.telemetry-tooltip').remove();

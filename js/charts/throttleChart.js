@@ -43,16 +43,6 @@ window.ThrottleChart = {
             chart.container.attr('id') !== container.attr('id')
         );
 
-        window.chartInstances.push({
-            container: container,
-            allData: allData,
-            scales: scales,
-            g: g,
-            yValue: d => d.throttle,
-            yLabel: '%',
-            yFormat: d => d3.format('.0f')(d)
-        });
-
         const zoom = d3.zoom()
             .scaleExtent([1, 10])
             .translateExtent([[0, 0], [width, height]])
@@ -60,21 +50,23 @@ window.ThrottleChart = {
             .on('zoom', (event) => {
                 const transform = event.transform;
 
-                if (window.ZoomManager) {
+                if (event.sourceEvent && window.ZoomManager) {
                     window.ZoomManager.setTransform(transform);
                 }
-
-                const newXScale = transform.rescaleX(scales.xScale);
-
-                g.select('.x-axis').call(d3.axisBottom(newXScale).tickFormat(d => d3.format('.0f')(d) + ' m'));
-
-                const lineGenerator = d3.line()
-                    .x(d => newXScale(d.distance))
-                    .y(d => scales.yScale(d.throttle))
-                    .curve(d3.curveMonotoneX);
-
-                g.selectAll('.line').attr('d', lineGenerator);
             });
+
+        window.chartInstances.push({
+            container: container,
+            allData: allData,
+            scales: scales,
+            g: g,
+            yValue: d => d.throttle,
+            yLabel: '%',
+            yFormat: d => d3.format('.0f')(d),
+            id: 'throttle-chart',
+            svg: svg,
+            zoom: zoom
+        });
 
         svg.call(zoom);
 
@@ -107,7 +99,7 @@ window.ThrottleChart = {
 
     prepareData() {
         const allData = [];
-        const drivers = Object.keys(state.telemetryData || {}); 
+        const drivers = Object.keys(state.telemetryData || {});
 
         drivers.forEach(driverNumber => {
             const driverData = state.telemetryData[driverNumber];

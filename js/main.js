@@ -78,7 +78,7 @@ function initializeZoomManager() {
                         return;
                     }
 
-                    const { g, scales, id } = chart;
+                    const { g, scales, id, svg, zoom } = chart;
 
                     // Check if scales.xScale exists
                     if (!scales.xScale) {
@@ -133,6 +133,7 @@ function initializeZoomManager() {
                             console.warn(`⚠️ ZoomManager: No .line elements found for chart ${id}`);
                         }
                     }
+
 
                     console.log(`✅ ZoomManager: Updated chart ${id}`);
 
@@ -493,9 +494,6 @@ function populateDriverSelectors() {
             }
         });
 
-        // Abilita il dropdown in modo sequenziale:
-        // Abilita il primo driver sempre se sessione selezionata
-        // Per gli altri: abilita solo se il driver precedente è selezionato
         if (i === 1) {
             select.disabled = !state.selectedSession; // abilita solo se sessione selezionata
         } else {
@@ -800,74 +798,6 @@ async function loadAllData() {
         hideLoading();
     }
 }
-
-async function handleSelectFastestLap() {
-    const selectedDrivers = state.selectedDrivers.filter(d => d);
-    if (!selectedDrivers.length) return;
-
-    showLoading();
-    try {
-        const sessionKey = state.selectedSession.session_key;
-        const driverNumbers = selectedDrivers.map(d => d.driver_number);
-
-        // Mappa dei migliori giri per ciascun pilota
-        const fastestLaps = await API.getFastestLap(sessionKey, driverNumbers);
-
-        if (!fastestLaps || Object.keys(fastestLaps).length === 0) {
-            alert('Nessun giro più veloce trovato.');
-            return;
-        }
-
-        console.log('Fastest laps:', fastestLaps);
-
-        for (const driver of selectedDrivers) {
-            const lapNumber = fastestLaps[driver.driver_number];
-            if (!lapNumber) continue;
-
-            console.log(`Driver ${driver.full_name} -> lap ${lapNumber}`);
-
-            // Aggiorna selezione manualmente per ogni pilota
-            await handleLapChange({ target: { value: lapNumber } }, driver.driver_number);
-        }
-
-    } catch (err) {
-        console.error('Error selecting fastest lap:', err);
-    } finally {
-        hideLoading();
-    }
-}
-
-async function loadTelemetryForLap(lap) {
-    if (!state.selectedSession || state.selectedDrivers.every(d => !d)) return;
-
-    console.log('Loading telemetry for lap:', lap);
-    state.selectedLap = lap;
-
-    showLoading();
-    try {
-        const selectedDrivers = state.selectedDrivers.filter(d => d);
-        const sessionKey = state.selectedSession.session_key;
-        const driverNumbers = selectedDrivers.map(d => d.driver_number);
-
-        const telemetryData = await API.getCarData(sessionKey, driverNumbers, lap);
-        state.telemetryData = {};
-
-        driverNumbers.forEach((driverNumber, idx) => {
-            state.telemetryData[driverNumber] = {
-                data: telemetryData[idx],
-                driver: selectedDrivers.find(d => d.driver_number === driverNumber),
-                color: state.slotColors[state.selectedDrivers.findIndex(d => d && d.driver_number === driverNumber)]
-            };
-        });
-
-        console.log('Telemetry data loaded:', state.telemetryData);
-    } catch (error) {
-        console.error('Error loading telemetry data:', error);
-    } finally {
-        hideLoading();
-    }
-}
-
 function updateCharts() {
     const raceWideCharts = document.getElementById('race-wide-charts');
     const individualLapCharts = document.getElementById('individual-lap-charts');

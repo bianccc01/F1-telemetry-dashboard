@@ -214,7 +214,6 @@ const RaceChart = {
                     return "block";
                 });
 
-            // IMPORTANT: Add event handlers IMMEDIATELY after creating elements
             console.log(`🎯 RaceChart: Adding event handlers to ${dotsSelection.size()} dots for driver ${driverId}`);
 
             dotsSelection

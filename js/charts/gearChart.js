@@ -54,16 +54,6 @@ window.GearChart = {
             chart.container.attr('id') !== container.attr('id')
         );
 
-        window.chartInstances.push({
-            container: container,
-            allData: allData,
-            scales: scales,
-            g: g,
-            yValue: d => d.n_gear,
-            yLabel: 'Gear',
-            yFormat: d => d3.format('.0f')(d)
-        });
-
         const zoom = d3.zoom()
             .scaleExtent([1, 10])
             .translateExtent([[0, 0], [width, height]])
@@ -71,21 +61,23 @@ window.GearChart = {
             .on('zoom', (event) => {
                 const transform = event.transform;
 
-                if (window.ZoomManager) {
+                if (event.sourceEvent && window.ZoomManager) {
                     window.ZoomManager.setTransform(transform);
                 }
-
-                const newXScale = transform.rescaleX(scales.xScale);
-
-                g.select('.x-axis').call(d3.axisBottom(newXScale).tickFormat(d => d3.format('.0f')(d) + ' m'));
-
-                const lineGenerator = d3.line()
-                    .x(d => newXScale(d.distance))
-                    .y(d => scales.yScale(d.n_gear))
-                    .curve(d3.curveStepAfter);
-
-                g.selectAll('.line').attr('d', lineGenerator);
             });
+
+        window.chartInstances.push({
+            container: container,
+            allData: allData,
+            scales: scales,
+            g: g,
+            yValue: d => d.n_gear,
+            yLabel: 'Gear',
+            yFormat: d => d3.format('.0f')(d),
+            id: 'gear-chart',
+            svg: svg,
+            zoom: zoom
+        });
 
         svg.call(zoom);
 
