@@ -39,7 +39,6 @@ body {
     display: flex;
     flex-direction: column;
     height: 100vh;
-    overflow: hidden; /* Blocca lo scroll verticale della pagina */
 }
 
 /* Header */
@@ -63,7 +62,6 @@ body {
 .main-container {
     display: flex;
     flex: 1;
-    overflow: hidden;
 }
 
 /* Sidebar */
@@ -398,7 +396,7 @@ select option {
 
 /* Toggle Sidebar Button */
 .toggle-sidebar-button {
-    position: absolute;
+    position: fixed;
     left: 285px; /* Adjust to not overlap */
     top: calc(50% + 50px); /* Adjust this value to center the button */
     transform: translateY(-50%);
