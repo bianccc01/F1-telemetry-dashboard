@@ -1,5 +1,6 @@
 const RaceChart = {
     tooltip: null, // Store tooltip reference
+    hideOutliers: false, // Track outlier visibility state
 
     create: function(data) {
         const container = d3.select("#race-chart");
@@ -12,6 +13,27 @@ const RaceChart = {
             container.html("<p>No data for race chart.</p>");
             return;
         }
+
+        // Add controls container
+        const controlsContainer = container.append("div")
+            .attr("class", "race-chart-controls")
+            .style("margin-bottom", "10px");
+
+        // Add outliers toggle button
+        const outlierButton = controlsContainer.append("button")
+            .attr("class", "outlier-toggle-btn")
+            .style("padding", "5px 10px")
+            .style("margin-right", "10px")
+            .style("background-color", this.hideOutliers ? "#dc3545" : "#28a745")
+            .style("color", "white")
+            .style("border", "none")
+            .style("border-radius", "4px")
+            .style("cursor", "pointer")
+            .text(this.hideOutliers ? "Show Outliers" : "Hide Outliers")
+            .on("click", () => {
+                this.hideOutliers = !this.hideOutliers;
+                this.create(data); // Recreate chart with new setting
+            });
 
         const margin = { top: 20, right: 30, bottom: 40, left: 60 };
         const width = container.node().getBoundingClientRect().width - margin.left - margin.right;
@@ -31,12 +53,58 @@ const RaceChart = {
             allLaps = allLaps.concat(validLaps);
         }
 
+        // Calculate outlier threshold if hiding outliers
+        let yDomainMin, yDomainMax;
+        let outlierThreshold = null;
+
+        if (this.hideOutliers && allLaps.length > 0) {
+            // Calculate median lap time
+            const sortedLaps = allLaps.map(d => d.lap_duration).sort((a, b) => a - b);
+            const median = sortedLaps.length % 2 === 0
+                ? (sortedLaps[sortedLaps.length / 2 - 1] + sortedLaps[sortedLaps.length / 2]) / 2
+                : sortedLaps[Math.floor(sortedLaps.length / 2)];
+
+            // Set threshold at 110% of median (similar to F1 Tempo)
+            outlierThreshold = median * 1.1;
+
+            // Filter laps for Y domain calculation
+            const filteredLaps = allLaps.filter(d => d.lap_duration <= outlierThreshold);
+
+            if (filteredLaps.length > 0) {
+                // Tighter margins when hiding outliers for better visibility
+                const range = d3.max(filteredLaps, d => d.lap_duration) - d3.min(filteredLaps, d => d.lap_duration);
+                const margin = range * 0.05; // 5% margin
+                yDomainMin = d3.min(filteredLaps, d => d.lap_duration) - margin;
+                yDomainMax = d3.max(filteredLaps, d => d.lap_duration) + margin;
+            } else {
+                // Fallback if all laps are outliers
+                yDomainMin = d3.min(allLaps, d => d.lap_duration) - 10;
+                yDomainMax = d3.max(allLaps, d => d.lap_duration) + 10;
+            }
+
+            // Show outlier count
+            const outlierCount = allLaps.filter(d => d.lap_duration > outlierThreshold).length;
+            if (outlierCount > 0) {
+                controlsContainer.append("span")
+                    .style("color", "#666")
+                    .style("font-size", "14px")
+                    .text(`(${outlierCount} outliers hidden)`);
+            }
+        } else {
+            // Show all data with normal margins
+            yDomainMin = d3.min(allLaps, d => d.lap_duration) - 10;
+            yDomainMax = d3.max(allLaps, d => d.lap_duration) + 10;
+        }
+
         const x = d3.scaleLinear()
-            .domain(d3.extent(allLaps, d => d.lap_number))
+            .domain([
+                d3.min(allLaps, d => d.lap_number) - 0.5,  // Add padding on the left
+                d3.max(allLaps, d => d.lap_number) + 0.5   // Add padding on the right
+            ])
             .range([0, width]);
 
         const y = d3.scaleLinear()
-            .domain([d3.min(allLaps, d => d.lap_duration) - 10, d3.max(allLaps, d => d.lap_duration) + 10])
+            .domain([yDomainMin, yDomainMax])
             .range([height, 0]);
 
         // Crea un gruppo per gli assi
@@ -86,9 +154,18 @@ const RaceChart = {
             'WET': 'blue'
         };
 
+        // Create line generator that handles outliers
         const line = d3.line()
             .x(d => x(d.lap_number))
-            .y(d => y(d.lap_duration));
+            .y(d => {
+                const yValue = y(d.lap_duration);
+                // Clamp outliers to chart boundaries when hidden
+                if (this.hideOutliers) {
+                    if (yValue < 0) return 0;
+                    if (yValue > height) return height;
+                }
+                return yValue;
+            });
 
         const lines = zoomGroup.append("g").attr("class", "lines-group");
         const dots = zoomGroup.append("g").attr("class", "dots-group");
@@ -112,11 +189,22 @@ const RaceChart = {
                 .enter().append("circle")
                 .attr("class", `dot dot-${driverId}`)
                 .attr("cx", d => x(d.lap_number))
-                .attr("cy", d => y(d.lap_duration))
+                .attr("cy", d => {
+                    const yValue = y(d.lap_duration);
+                    // Don't render outlier dots when option is enabled
+                    return yValue;
+                })
                 .attr("r", 5)
                 .style("fill", d => tyreColors[d.compound] || driverData.color)
                 .style("stroke", driverData.color)
                 .style("cursor", "pointer")
+                .style("display", d => {
+                    // Hide outlier dots based on threshold
+                    if (this.hideOutliers && outlierThreshold && d.lap_duration > outlierThreshold) {
+                        return "none";
+                    }
+                    return "block";
+                })
                 .on("mouseover", (event, d) => {
                     if (this.tooltip) {
                         this.tooltip.transition()
@@ -132,13 +220,13 @@ const RaceChart = {
                             .style("top", (event.pageY - 40) + "px");
                     }
                 })
-        .on("mouseout", () => {
-                if (this.tooltip) {
-                    this.tooltip.transition()
-                        .duration(200)
-                        .style("opacity", 0);
-                }
-            })
+                .on("mouseout", () => {
+                    if (this.tooltip) {
+                        this.tooltip.transition()
+                            .duration(200)
+                            .style("opacity", 0);
+                    }
+                })
                 .on("click", (event, d) => {
                     event.stopPropagation();
 
@@ -193,15 +281,21 @@ const RaceChart = {
             // Applica solo la trasformazione X al contenuto
             const line = d3.line()
                 .x(d => newX(d.lap_number))
-                .y(d => y(d.lap_duration)); // Y usa sempre la scala originale
+                .y(d => {
+                    const yValue = y(d.lap_duration);
+                    if (this.hideOutliers) {
+                        if (yValue < 0) return 0;
+                        if (yValue > height) return height;
+                    }
+                    return yValue;
+                });
 
             // Aggiorna le linee
             zoomGroup.selectAll("path").attr("d", line);
 
             // Aggiorna le posizioni dei punti
             zoomGroup.selectAll("circle")
-                .attr("cx", d => newX(d.lap_number))
-                .attr("cy", d => y(d.lap_duration)); // Y rimane fisso
+                .attr("cx", d => newX(d.lap_number));
         };
 
         // Zoom logic - solo orizzontale con limiti dinamici
