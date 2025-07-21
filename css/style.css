@@ -39,6 +39,7 @@ body {
     display: flex;
     flex-direction: column;
     height: 100vh;
+    overflow-y: hidden; /* Blocca lo scroll verticale della pagina */
 }
 
 /* Header */
