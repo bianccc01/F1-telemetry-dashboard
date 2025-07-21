@@ -24,7 +24,7 @@ const RaceChart = {
             .attr("class", "outlier-toggle-btn")
             .style("padding", "5px 10px")
             .style("margin-right", "10px")
-            .style("background-color", this.hideOutliers ? "#dc3545" : "#28a745")
+            .style("background-color", this.hideOutliers ? "#6c757d": "#dc3545")
             .style("color", "white")
             .style("border", "none")
             .style("border-radius", "4px")
@@ -53,9 +53,10 @@ const RaceChart = {
             allLaps = allLaps.concat(validLaps);
         }
 
-        // Calculate outlier threshold if hiding outliers
+        // Calculate outlier threshold and Y domain
         let yDomainMin, yDomainMax;
         let outlierThreshold = null;
+        let outlierCount = 0;
 
         if (this.hideOutliers && allLaps.length > 0) {
             // Calculate median lap time
@@ -67,23 +68,32 @@ const RaceChart = {
             // Set threshold at 110% of median (similar to F1 Tempo)
             outlierThreshold = median * 1.1;
 
-            // Filter laps for Y domain calculation
-            const filteredLaps = allLaps.filter(d => d.lap_duration <= outlierThreshold);
+            // Count outliers
+            outlierCount = allLaps.filter(d => d.lap_duration > outlierThreshold).length;
 
-            if (filteredLaps.length > 0) {
-                // Tighter margins when hiding outliers for better visibility
-                const range = d3.max(filteredLaps, d => d.lap_duration) - d3.min(filteredLaps, d => d.lap_duration);
-                const margin = range * 0.05; // 5% margin
-                yDomainMin = d3.min(filteredLaps, d => d.lap_duration) - margin;
-                yDomainMax = d3.max(filteredLaps, d => d.lap_duration) + margin;
+            // Only apply tighter Y domain if there are actually outliers to hide
+            if (outlierCount > 0) {
+                // Filter laps for Y domain calculation
+                const filteredLaps = allLaps.filter(d => d.lap_duration <= outlierThreshold);
+
+                if (filteredLaps.length > 0) {
+                    // Tighter margins when hiding outliers for better visibility
+                    const range = d3.max(filteredLaps, d => d.lap_duration) - d3.min(filteredLaps, d => d.lap_duration);
+                    const margin = range * 0.05; // 5% margin
+                    yDomainMin = d3.min(filteredLaps, d => d.lap_duration) - margin;
+                    yDomainMax = d3.max(filteredLaps, d => d.lap_duration) + margin;
+                } else {
+                    // Fallback if all laps are outliers - use normal margins
+                    yDomainMin = d3.min(allLaps, d => d.lap_duration) - 10;
+                    yDomainMax = d3.max(allLaps, d => d.lap_duration) + 10;
+                }
             } else {
-                // Fallback if all laps are outliers
+                // No outliers found - use normal margins (no zoom)
                 yDomainMin = d3.min(allLaps, d => d.lap_duration) - 10;
                 yDomainMax = d3.max(allLaps, d => d.lap_duration) + 10;
             }
 
-            // Show outlier count
-            const outlierCount = allLaps.filter(d => d.lap_duration > outlierThreshold).length;
+            // Show outlier count only if there are outliers
             if (outlierCount > 0) {
                 controlsContainer.append("span")
                     .style("color", "#666")
