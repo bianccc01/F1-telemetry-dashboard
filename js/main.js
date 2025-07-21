@@ -420,6 +420,9 @@ async function handleSessionChange(event) {
 
         populateDriverSelectors();
         updateWeatherInfo(weatherData); // Update weather info immediately
+        if (weatherData) {
+            document.querySelector('.weather-container').classList.remove('hidden-by-default');
+        }
         resetLapSelector();
         updateCharts(); // Pulisce i grafici precedenti
 
