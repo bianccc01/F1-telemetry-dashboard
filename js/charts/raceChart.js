@@ -123,7 +123,7 @@ const RaceChart = {
         const xAxis = axisGroup.append("g")
             .attr("class", "x-axis")
             .attr("transform", `translate(0,${height})`)
-            .call(d3.axisBottom(x).ticks(d3.max(allLaps, d => d.lap_number)));
+            .call(d3.axisBottom(x).tickValues(d3.range(5, d3.max(allLaps, d => d.lap_number) + 1, 5)));
 
         const yAxis = axisGroup.append("g")
             .attr("class", "y-axis")
@@ -286,7 +286,9 @@ const RaceChart = {
             // Aggiorna solo l'asse X con la scala trasformata
             const newX = clampedTransform.rescaleX(x);
 
-            xAxis.call(d3.axisBottom(newX));
+            const newDomain = newX.domain();
+            const tickValues = d3.range(Math.ceil(newDomain[0]), Math.floor(newDomain[1]) + 1, 5);
+            xAxis.call(d3.axisBottom(newX).tickValues(tickValues));
 
             // Applica solo la trasformazione X al contenuto
             const line = d3.line()
