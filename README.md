@@ -1,6 +1,6 @@
 # 🏎️ F1 Telemetry Visualization Dashboard
 
-[![Live Demo](https://img.shields.io/badge/🚀-Live%20Demo-blue?style=for-the-badge)](https://bianccc01.github.io/Infoviz-f1-telemetry-dashboard/)
+[![Live Demo](https://img.shields.io/badge/🚀-Live%20Demo-blue?style=for-the-badge)](https://bianccc01.github.io/F1-telemetry-dashboard/)
 [![Data Source](https://img.shields.io/badge/📊-Open%20F1%20API-orange?style=for-the-badge)](https://openf1.org/)
 
 > An interactive web-based dashboard for visualizing and analyzing Formula 1 telemetry data with real-time comparison capabilities across drivers, sessions, and Grand Prix events.
@@ -32,13 +32,13 @@
 ## 🚀 Quick Start
 
 ### **Option 1: Live Demo** 
-Click [here](https://bianccc01.github.io/Infoviz-f1-telemetry-dashboard/) to access the live dashboard immediately.
+Click [here](https://bianccc01.github.io/F1-telemetry-dashboard/) to access the live dashboard immediately.
 
 ### **Option 2: Local Setup**
 1. **Clone the Repository**
    ```bash
-   git clone https://github.com/bianccc01/Infoviz-f1-telemetry-dashboard.git
-   cd Infoviz-f1-telemetry-dashboard
+   git clone https://github.com/bianccc01/F1-telemetry-dashboard.git
+   cd F1-telemetry-dashboard
    ```
 
 2. **Launch the Application**
