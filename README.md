@@ -1,4 +1,4 @@
-# 🏎️ F1 Telemetry Visualization Dashboard
+# 🏎️ F1 Telemetry Dashboard
 
 [![Live Demo](https://img.shields.io/badge/🚀-Live%20Demo-blue?style=for-the-badge)](https://bianccc01.github.io/F1-telemetry-dashboard/)
 [![Data Source](https://img.shields.io/badge/📊-Open%20F1%20API-orange?style=for-the-badge)](https://openf1.org/)
