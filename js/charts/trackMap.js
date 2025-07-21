@@ -90,3 +90,6 @@ const TrackMap = {
         }
     }
 };
+
+
+window.TrackMap = TrackMap;

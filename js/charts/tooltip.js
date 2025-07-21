@@ -179,7 +179,7 @@ window.Tooltip = {
             }
         });
 
-        if (pointForTrackMap && window.TrackMap && window.TrackMap.updateCarPosition) {
+        if (pointForTrackMap && typeof TrackMap !== 'undefined' && TrackMap.updateCarPosition) {
             TrackMap.updateCarPosition(pointForTrackMap);
         }
     },
