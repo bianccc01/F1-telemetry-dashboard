@@ -3,6 +3,8 @@
 [![Live Demo](https://img.shields.io/badge/🚀-Live%20Demo-blue?style=for-the-badge)](https://bianccc01.github.io/F1-telemetry-dashboard/)
 [![Data Source](https://img.shields.io/badge/📊-Open%20F1%20API-orange?style=for-the-badge)](https://openf1.org/)
 
+![Demo](assets/demo.gif)
+
 > An interactive web-based dashboard for visualizing and analyzing Formula 1 telemetry data with real-time comparison capabilities across drivers, sessions, and Grand Prix events.
 
 ## 🌟 Features
