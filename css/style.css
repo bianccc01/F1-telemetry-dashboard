@@ -417,7 +417,7 @@ select option {
 /* Toggle Sidebar Button */
 .toggle-sidebar-button {
     position: fixed;
-    left: 265px; /* Adjust to not overlap */
+    left: 285px; /* Adjust to not overlap */
     top: calc(50% + 50px); /* Adjust this value to center the button */
     transform: translateY(-50%);
     z-index: 50;
