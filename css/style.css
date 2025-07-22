@@ -416,9 +416,9 @@ select option {
 
 /* Toggle Sidebar Button */
 .toggle-sidebar-button {
-    position: fixed;
-    left: 285px; /* Adjust to not overlap */
-    top: calc(50% + 50px); /* Adjust this value to center the button */
+    position: absolute;
+    left: 284px; /* Adjust to not overlap */
+    top: 50%; /* Adjust this value to center the button */
     transform: translateY(-50%);
     z-index: 50;
     width: 15px;
@@ -452,7 +452,7 @@ select option {
     border-right: none;
 }
 
-.column.sidebar-hidden + .column + .toggle-sidebar-button {
+.column.sidebar-hidden .toggle-sidebar-button {
     left: 0;
 }
 

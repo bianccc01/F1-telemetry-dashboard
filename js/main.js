@@ -184,8 +184,10 @@ function setupSidebarToggle() {
         // Change button text based on state
         if (sidebarColumn.classList.contains('sidebar-hidden')) {
             toggleButton.textContent = '▶';
+            toggleButton.style.left = '';
         } else {
             toggleButton.textContent = '◀';
+            toggleButton.style.left = '255px';
         }
     });
 }
@@ -198,6 +200,7 @@ function hideSidebar() {
         sidebarColumn.classList.add('sidebar-hidden');
         if (toggleButton) {
             toggleButton.textContent = '▶';
+            toggleButton.style.left = '';
         }
     }
 }
