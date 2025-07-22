@@ -190,6 +190,18 @@ function setupSidebarToggle() {
     });
 }
 
+function hideSidebar() {
+    const sidebarColumn = document.querySelector('.column:first-child');
+    const toggleButton = document.getElementById('toggle-sidebar-button');
+
+    if (sidebarColumn && !sidebarColumn.classList.contains('sidebar-hidden')) {
+        sidebarColumn.classList.add('sidebar-hidden');
+        if (toggleButton) {
+            toggleButton.textContent = '▶';
+        }
+    }
+}
+
 // Populate year selector
 function populateYearSelector() {
     const selector = document.getElementById('year-selector');
@@ -552,6 +564,13 @@ async function handleDriverChange(slotIndex, driverNumber) {
                 populateDriverSelectors();
                 updateLapSelectors();
                 updateCharts();
+
+                const backToRaceButton = document.getElementById('back-to-race-button');
+                const isRaceViewVisible = backToRaceButton.style.display !== 'none';
+
+                if (!isRaceViewVisible && state.selectedSession && (state.selectedSession.session_name === 'Race' || state.selectedSession.session_name === 'Sprint')) {
+                    hideSidebar();
+                }
             }
         } catch (error) {
             console.error(`Error fetching laps for driver ${driver.driver_number}:`, error);
@@ -740,6 +759,7 @@ async function loadAllData() {
     clearCharts();
     state.telemetryData = {};
     state.dataLoaded = true;
+    hideSidebar();
 
 
     const driversToLoad = state.selectedDrivers.filter(d => d && state.selectedLaps[d.driver_number]);
